@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<wenshu>	
+    <network>
+        <title>该配置用于设置对外服务端口</title>
+        <ip>0.0.0.0</ip>
+        <port>9001</port>
+    </network>
+    
+    <storage>
+        <path>./db</path>
+    </storage>
+</wenshu>
