@@ -37,13 +37,11 @@ struct server
     uv_udp_t udp_handle;
     uv_timer_t monitor_timer;
     void (*server_monitor_cb)(struct server *s);
-    map_t udp_assistants;
-    uv_mutex_t udp_assistants_mutex;
-    list(struct assistant *, tcp_assistants);
-    uv_mutex_t tcp_assistants_mutex;
+    map_t assistants_map;
+    list(struct assistant *, assistants_list);
+    list(uv_tcp_t *, tcp_connections_list);
 };
 
-//void server_init(struct server s, enum server_type type);  // initial a server
 
 int server_init(struct server *s,
                 char *name,
@@ -52,6 +50,12 @@ int server_init(struct server *s,
                 char *ip,
                 int port);
 
+/**
+ * get a assistant instance, if the key is not in hashmap, create a new one
+ * @param s server instance
+ * @param key assistant key
+ */
+struct assistant *server_get_assistant(struct server *s, char *key);
 
 
 #endif /* server_h */

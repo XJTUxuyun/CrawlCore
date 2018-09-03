@@ -24,27 +24,55 @@ Config config;  // 全局配置
 
 int pfan(any_t item, any_t data)
 {
-    printf("get value->%d\n",*(int *)data);
+    printf("get value->%d\n",*(char *)data);
     return MAP_OK;
 }
 
+
+
 int main(int argc, char ** argv)
 {
+    int r;
+    r = log4c_init();
+    assert(0 == r);
+    if (r)
+    {
+        printf("inital log4c error...\n");
+        return -1;
+    }
+    else
+    {
+        printf("intial log4c success...\n");
+    }
+    log4c_category_t *cat = log4c_category_get("core.crawl");
+    log4c_category_log(cat, LOG4C_PRIORITY_INFO, "shit");
+    log4c_category_log(cat, LOG4C_PRIORITY_ERROR, "fuck");
     printf("version %d\n", version());
     printf("version %s\n", version_string());
     
+    
     map_t m = hashmap_new();
     char *a = "hello";
-    int b = 5;
-    int c = 6;
-    int r = hashmap_put(m, "h", &c);
-    r = hashmap_put(m, a, &b);
+    char *b = "fuck";
+ 
+    r = hashmap_put(m, a, b);
     assert(MAP_OK == r);
     if (r != MAP_OK)
     {
         printf("map put error...\n");
     }
-    hashmap_iterate(m, pfan, NULL);
+    char *c;
+    r = hashmap_get(m, a, (void **)(&c));
+    if (MAP_OK == r)
+    {
+        printf("fuck");
+    }
+    else
+    {
+        printf("shit");
+    }
+    printf("test->%s", c);
+   // hashmap_iterate(m, pfan, NULL);
     
     /*
     int r;
@@ -134,8 +162,23 @@ int main(int argc, char ** argv)
     return 0;*/
     loop = uv_default_loop();
     
+    struct assistants_container container;
+    r = assistants_container_init(&container, loop);
+    get_assistant_instance(&container, "fuck");
+    
     struct server s;
-    server_init(&s, "test", TCP_SERVER, loop, "127.0.0.1", 9001);
+    server_init(&s, "test---------", UDP_SERVER, loop, "127.0.0.1", 9001);
     uv_run(loop, UV_RUN_DEFAULT);
+    r = log4c_fini();
+    assert(0 == r);
+    if (r)
+    {
+        printf("clean log error...\n");
+    }
+    else
+    {
+        printf("clean log success...\n");
+    }
+    return 0;
 }
 

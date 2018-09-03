@@ -3,6 +3,79 @@
 #include <uv.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "tools.h"
+
+void tcp_read_cb(uv_stream_t* handle,
+                 ssize_t nread,
+                 const uv_buf_t *buf)
+{
+    printf("nread->%d\n", nread);
+}
+
+void connection_cb(uv_stream_t *tcp,
+                   int status)
+{
+    int r;
+    assert(status == 0);
+    if (status)
+    {
+        printf("tcp connection error...\n");
+        return;
+    }
+    
+    // ready for accept a remote connection
+    uv_tcp_t tcp_incoming;
+    
+    r = uv_accept(tcp, (uv_stream_t *)(&tcp_incoming));
+    //assert(0 == r);
+    if (r)
+    {
+        printf("accept a remote client error...\n");
+        return;
+    }
+    
+    tcp_incoming.data = malloc(sizeof(void **) * 2);
+    //assert(NULL != tcp_incoming->data);
+    if (NULL == tcp_incoming.data)
+    {
+        printf("malloc tcp_incoming data error...\n");
+        //free(tcp_incoming);
+        return;
+    }
+    //((void **)(tcp_incoming->data))[0] = tcp->data;
+    //((void **)(tcp_incoming->data))[1] = tcp_incoming;
+    //uv_tcp_keepalive(tcp_incoming, 1, 3);
+    r = uv_read_start((uv_stream_t *)&tcp_incoming, alloc_cb, tcp_read_cb);
+    assert(0 == r);
+    if (r)
+    {
+        printf("server start read remote client error...\n");
+        uv_close((uv_handle_t *) &tcp_incoming, NULL);
+    }
+    return;  // everything is ok.
+}
+
+int main111(int argc, char **argv)
+{
+    int r;
+    uv_loop_t *loop = uv_default_loop();
+    uv_tcp_t server1;
+    struct sockaddr_in addr;
+    r = uv_ip4_addr("127.0.0.1", 9001, &addr);
+    assert(0 == r);
+    r = uv_tcp_init(loop, &server1);
+    assert(0 == r);
+    r = uv_tcp_bind(&server1, (const struct sockaddr*) &addr, 0);
+    assert(0 == r);
+    r = uv_listen((uv_stream_t *)&server1, 128, connection_cb);
+    printf("1111%s\n", uv_err_name(r));
+    assert(0 == r);
+    r = uv_run(loop, UV_RUN_DEFAULT);
+    assert(0 == r);
+    return 0;
+}
+
+
 /*
 void test_worker(uv_work_t *req)
 {

@@ -209,6 +209,7 @@ void server_monitor_cb(uv_timer_t *handle)
         printf("monitor error...\n");
         return;
     }
+    /*
     uv_mutex_lock(&s->tcp_assistants_mutex);
     list_each_elem (s->tcp_assistants, assis)
     {
@@ -223,7 +224,7 @@ void server_monitor_cb(uv_timer_t *handle)
         }
         
     }
-    uv_mutex_unlock(&s->tcp_assistants_mutex);
+    uv_mutex_unlock(&s->tcp_assistants_mutex);*/
 }
 
 
@@ -279,13 +280,13 @@ int server_init(struct server *s,
             break;
         default:
             printf("server type invalid...\n");
-            return -1;
+            r = -1;
             break;
     }
     assert(0 == r);
     if (r)
     {
-        return -1;
+        return r;
     }
     
     r = uv_timer_init(s->loop, &s->monitor_timer);
@@ -295,7 +296,7 @@ int server_init(struct server *s,
         return -1;
     }
     s->monitor_timer.data = s;  // pass server itself to timer callback
-    r = uv_timer_start(& s->monitor_timer, server_monitor_cb, 3000, 2000);
+    //r = uv_timer_start(& s->monitor_timer, server_monitor_cb, 3000, 2000);
     assert(0 == r);
     if (r)
     {
@@ -306,6 +307,26 @@ int server_init(struct server *s,
     
 error0:
     ;
+}
+
+/**
+ * get a assistant instance, if the key is not in hashmap, create a new one
+ * @param s server instance
+ * @param key assistant key
+ */
+struct assistant *server_get_assistant(struct server *s, char *key)
+{
+    struct assistant *assis = NULL;
+    int error;
+    error = hashmap_get(s->assistants_map, key, &assis);
+    if (MAP_OK == error)
+    {
+        return assis;
+    }
+    else{
+        
+    }
+    return assis;
 }
 
 

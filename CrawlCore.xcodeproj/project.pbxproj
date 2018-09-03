@@ -17,6 +17,8 @@
 		390AEFC421357597003AF53A /* server_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC221357597003AF53A /* server_tcp.c */; };
 		390AEFC7213575E8003AF53A /* server_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC5213575E8003AF53A /* server_udp.c */; };
 		390AEFCA21357DD1003AF53A /* tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC821357DD1003AF53A /* tools.c */; };
+		390AEFCC21394D08003AF53A /* tesc_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFCB21394D08003AF53A /* tesc_tcp.c */; };
+		390AEFCF213A425F003AF53A /* uuid4.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFCE213A425F003AF53A /* uuid4.c */; };
 		397366F5212A6193003642F7 /* libuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366F4212A6193003642F7 /* libuv.a */; };
 		397366FD212A6A2A003642F7 /* liblog4c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366FC212A6A2A003642F7 /* liblog4c.a */; };
 		39736700212AA082003642F7 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366FF212AA082003642F7 /* libxml2.tbd */; };
@@ -55,9 +57,12 @@
 		390AEFC6213575E8003AF53A /* server_udp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = server_udp.h; sourceTree = "<group>"; };
 		390AEFC821357DD1003AF53A /* tools.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tools.c; sourceTree = "<group>"; };
 		390AEFC921357DD1003AF53A /* tools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
+		390AEFCB21394D08003AF53A /* tesc_tcp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tesc_tcp.c; sourceTree = "<group>"; };
+		390AEFCD213A425F003AF53A /* uuid4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uuid4.h; sourceTree = "<group>"; };
+		390AEFCE213A425F003AF53A /* uuid4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = uuid4.c; sourceTree = "<group>"; };
 		397366F4212A6193003642F7 /* libuv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuv.a; path = "../../../../usr/local/Cellar/libuv/HEAD-69c43d9/lib/libuv.a"; sourceTree = "<group>"; };
 		397366FC212A6A2A003642F7 /* liblog4c.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblog4c.a; path = ../../../../usr/local/Cellar/log4c/1.2.4/lib/liblog4c.a; sourceTree = "<group>"; };
-		397366FE212A8EDF003642F7 /* log4crc.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = log4crc.in; sourceTree = "<group>"; };
+		397366FE212A8EDF003642F7 /* log4crc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = log4crc; sourceTree = "<group>"; };
 		397366FF212AA082003642F7 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
 		39736701212AA588003642F7 /* config.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		39736708212AF565003642F7 /* libjson-c.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libjson-c.a"; path = "../../../../usr/local/Cellar/json-c/0.13.1/lib/libjson-c.a"; sourceTree = "<group>"; };
@@ -120,7 +125,7 @@
 				390AEFB6213527F6003AF53A /* list.c */,
 				390AEFB7213527F6003AF53A /* list.h */,
 				39736701212AA588003642F7 /* config.xml */,
-				397366FE212A8EDF003642F7 /* log4crc.in */,
+				397366FE212A8EDF003642F7 /* log4crc */,
 				390AEFB32134F139003AF53A /* hashmap.c */,
 				390AEFB42134F139003AF53A /* hashmap.h */,
 				390AEFB0213426A8003AF53A /* assistant.c */,
@@ -131,6 +136,9 @@
 				390AEFC6213575E8003AF53A /* server_udp.h */,
 				390AEFC821357DD1003AF53A /* tools.c */,
 				390AEFC921357DD1003AF53A /* tools.h */,
+				390AEFCE213A425F003AF53A /* uuid4.c */,
+				390AEFCD213A425F003AF53A /* uuid4.h */,
+				390AEFCB21394D08003AF53A /* tesc_tcp.c */,
 			);
 			path = CrawlCore;
 			sourceTree = "<group>";
@@ -194,10 +202,12 @@
 				390AEFA721316614003AF53A /* server.c in Sources */,
 				390AEFC7213575E8003AF53A /* server_udp.c in Sources */,
 				390AEF1A212D7D64003AF53A /* main.c in Sources */,
+				390AEFCF213A425F003AF53A /* uuid4.c in Sources */,
 				390AEFCA21357DD1003AF53A /* tools.c in Sources */,
 				390AEFB8213527F6003AF53A /* list.c in Sources */,
 				390AEFC421357597003AF53A /* server_tcp.c in Sources */,
 				390AEFA621316614003AF53A /* config.c in Sources */,
+				390AEFCC21394D08003AF53A /* tesc_tcp.c in Sources */,
 				390AEFB52134F13A003AF53A /* hashmap.c in Sources */,
 				390AEFA821316614003AF53A /* main1.c in Sources */,
 				390AEFB2213426A8003AF53A /* assistant.c in Sources */,

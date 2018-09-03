@@ -14,9 +14,22 @@
  */
 void server_udp_work_cb(uv_work_t *req)
 {
+    /*
+    int r;
     struct sockaddr addr = *(struct sockaddr *)((char *)(req->data));
     uv_buf_t buf = *(uv_buf_t *)((char *)(req->data) + sizeof(struct sockaddr));
     ssize_t nread = *(ssize_t *)((char *)(req->data) + sizeof(struct sockaddr) + sizeof(uv_buf_t));
+    char sender[16];
+    r = uv_ip4_name(((struct sockaddr_in*)(&addr)), sender, 16);
+    assert(0 == r);
+    if (r)
+    {
+        return;
+    }
+    int port = ntohs(((struct sockaddr_in*) &addr)->sin_port);
+    printf("remote ip->%s port->%d",sender, port);
+    */
+    printf("fuck u...\n");
 }
 
 /**
@@ -53,9 +66,10 @@ void server_udp_read(uv_udp_t *udp,
                      unsigned flags)
 {
     int r;
-    assert(NULL == addr);
+    // assert(NULL == addr);
     if (NULL == addr)  // addr null represent read data error, free memory to avoid leak.
     {
+        printf("ssssssssss");
         if (buf->base)
         {
             free(buf->base);
@@ -63,7 +77,7 @@ void server_udp_read(uv_udp_t *udp,
         return;
     }
     
-    assert(UV_UDP_PARTIAL == flags);
+    // assert(UV_UDP_PARTIAL == flags);
     if (UV_UDP_PARTIAL == flags)
     {
         printf("read partial data due to less memory...\n");
@@ -74,7 +88,7 @@ void server_udp_read(uv_udp_t *udp,
         return;
     }
     
-    assert(nread >= 0);
+    // assert(nread >= 0);
     if (nread < 0)
     {
         printf("read udp data error...\n");
@@ -84,7 +98,15 @@ void server_udp_read(uv_udp_t *udp,
         }
         return;
     }
-    
+    if (0 == nread)
+    {
+        printf("read udp data empty...\n");
+        if (buf->base)
+        {
+            free(buf->base);
+        }
+        return;
+    }
     // true job will be done with threadpool.
     uv_work_t req;
     req.data = malloc(sizeof(struct sockaddr) + sizeof(uv_buf_t) + sizeof(ssize_t));  // remember free to avoid leak.
@@ -117,11 +139,7 @@ void server_udp_read(uv_udp_t *udp,
         }
         return;
     }
-    
-    
 }
-
-
 
 /**
  * do some udp type server initial
@@ -130,43 +148,29 @@ void server_udp_read(uv_udp_t *udp,
 int server_init_udp(struct server *s)
 {
     int r;
-    s->udp_handle.data = s;
-    r = uv_mutex_init(& s->udp_assistants_mutex);
-    assert(0 == r);
-    if (r)
-    {
-        printf("intial udp assistants mutex error...\n");
-    }
-    s->udp_assistants = hashmap_new();
-    assert(NULL != s->udp_assistants);
-    if (NULL == s->udp_assistants)
-    {
-        printf("create udp assistants hashmap error...\n");
-        goto leak;
-    }
     r = uv_udp_init(s->loop, &s->udp_handle);
     assert(0 == r);
     if (r)
     {
         printf("initial udp_handle error...\n");
-        goto leak;
+        return r;
     }
-    r = uv_udp_bind(& s->udp_handle, (struct sockaddr *) & s->addr, 0);
+    r = uv_udp_bind(& s->udp_handle, (struct sockaddr *) & s->addr, UV_UDP_REUSEADDR);
     assert(0 == r);
     if (r)
     {
         printf("bind udp_handle error...\n");
-        goto leak;
+        return r;
     }
-    r = uv_udp_recv_start(&s->udp_handle, alloc_cb, server_udp_read);
+    
+    s->udp_handle.data = s;
+    
+    r = uv_udp_recv_start(& s->udp_handle, alloc_cb, server_udp_read);
     assert(0 == r);
-    if (0 == r)
+    if (r)
     {
         printf("udp recv start error...\n");
-        goto leak;
+        return r;
     }
     return 0;
-leak:
-    hashmap_free(s->udp_assistants);
-    return r;
 }

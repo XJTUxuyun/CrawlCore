@@ -10,12 +10,11 @@
 	</config>
 
 	<category name="root" priority="notice"/>
-    <category name="six13log.log" priority="error" appender="stdout" />
-    <category name="core.wenshu" priority="error" appender="myrollingfileappender" />
+    <category name="core.crawl" priority="info" appender="myrollingfileappender" />
 
 	<rollingpolicy name="myrollingpolicy" type="sizewin" maxsize="1024" maxnum="10" />
 
-	<appender name="myrollingfileappender" type="rollingfile" logdir="/Users/wyl/git-workspace/CourtCrawlCore/log" prefix="myprefix" layout="dated" rollingpolicy="myrollingpolicy" />
+	<appender name="myrollingfileappender" type="rollingfile" logdir="/Users/wyl/git-workspace/CourtCrawlCore/log" prefix="log" layout="dated" rollingpolicy="myrollingpolicy" />
 	
 	<appender name="stdout" type="stream" layout="basic"/>
 	<appender name="stderr" type="stream" layout="dated"/>
