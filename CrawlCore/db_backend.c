@@ -55,12 +55,13 @@ int db_backend_put(struct db_backend *db_backend, struct task *task)
     char *sql = "insert or replace into test(uuid, mid, status, ctime, mtime, retry, data) values(%s, %d, %c, %l, %l, %d, ?)";
     char tmp[256];
     sprintf(tmp, sql, task->uuid, task->mid, task->status, task->ctime, task->mtime, task->retry);
+    printf("%s\n", task->uuid);
     r = sqlite3_prepare(db_backend->db, tmp, -1, &stat, 0 );
     if (SQLITE_OK != r)
     {
         err_msg = sqlite3_errmsg(db_backend->db);
-        printf("error->%s\n", err_msg);
-        sqlite3_free(err_msg);
+        printf("error1->%s\n", err_msg);
+        //sqlite3_free(err_msg);
         sqlite3_mutex_leave(db_backend->mutex);
         return -1;
     }

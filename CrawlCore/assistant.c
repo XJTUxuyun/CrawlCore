@@ -15,6 +15,10 @@ int task_init(struct task *task, char *uuid)
     {
         uuid_generate(task->uuid);
     }
+    else
+    {
+        memcpy(task->uuid, uuid, strlen(uuid));
+    }
     return 0;
 }
 

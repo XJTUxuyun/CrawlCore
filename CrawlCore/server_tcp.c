@@ -8,12 +8,6 @@
 
 #include "server_tcp.h"
 
-
-/**
- * do some tcp type server initial
- * default backlog is 128
- * @param s server
- */
 int server_init_tcp(struct server *s)
 {
     int r;
@@ -42,11 +36,6 @@ int server_init_tcp(struct server *s)
     return 0;  // everything is ok.
 }
 
-/**
- * callback when a new tcp connection from remote client
- * @param tcp triggered tcp handle
- * @param status status pass from uv
- */
 void server_tcp_accept_connection(uv_stream_t *tcp,
                                   int status)
 {
@@ -110,10 +99,6 @@ void server_tcp_write_cb(uv_write_t *req, int status)
     free(write);
 }
 
-/**
- * true action on the tcp recieve data.
- * @param req all data encapsulate
- */
 void server_tcp_work_cb(uv_work_t *req)
 {
     struct server *server = (struct server *)((void **)req->data)[0];
@@ -146,11 +131,6 @@ void server_tcp_work_cb(uv_work_t *req)
     printf("%lu, %s %s\n", nread, buf.base, server->name);
 }
 
-/**
- * action after server_tcp_work_cb
- * @param req remember free data to avoid leak
- * @param status server_tcp_work_cb excute status
- */
 void server_tcp_work_after_cb(uv_work_t *req,
                               int status)
 {
@@ -166,11 +146,6 @@ void server_tcp_work_after_cb(uv_work_t *req,
     }
 }
 
-
-/**
- * tcp connection close callback, main aim is clean resource to void leak
- * @param tcp_connection the connection which will be close
- */
 void tcp_connection_close_cb(uv_handle_t *tcp_connection)
 {
     if (tcp_connection->data)
@@ -184,12 +159,6 @@ void tcp_connection_close_cb(uv_handle_t *tcp_connection)
     }
 }
 
-/**
- * server tcp read callback
- * @param handle connected tcp handle
- * @param nread num of data readed
- * @param buf readed data stored
- */
 void server_tcp_read_cb(uv_stream_t* handle,
                         ssize_t nread,
                         const uv_buf_t *buf)

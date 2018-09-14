@@ -57,7 +57,11 @@ int main(int argc, char ** argv)
 {
     struct db_backend db;
     db_backend_init("/Users/wyl/git-workspace/CourtCrawlCore/test.db3", &db);
-    
+    struct task task;
+    task.mid = 1;
+    task.data = "fuck";
+    task_init(&task, "1111");
+    db_backend_put(&db, &task);
     int r;
     r = log4c_init();
     assert(0 == r);

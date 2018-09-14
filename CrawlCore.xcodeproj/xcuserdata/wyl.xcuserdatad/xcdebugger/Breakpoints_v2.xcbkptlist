@@ -26,12 +26,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "CrawlCore/assistant.c"
-            timestampString = "558604989.757597"
+            timestampString = "558609282.927217"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "179"
-            endingLineNumber = "179"
-            landmarkName = "get_assistant_instance"
+            startingLineNumber = "206"
+            endingLineNumber = "206"
+            landmarkName = "assistants_container_init"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
