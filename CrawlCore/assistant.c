@@ -66,6 +66,7 @@ int assistant_destory(struct assistant *assistant)
 
 void assistant_inspector(struct assistant *assistant)
 {
+    printf("assistant inspector...\n");
     uv_mutex_lock(&assistant->mutex);
     assistant->tick ++;
     list_each_elem(assistant->task_running_list, task)
@@ -93,17 +94,17 @@ void assistant_container_inspector_cb(uv_work_t *req)
     uv_mutex_lock(&container->mutex);
     list_each_elem(container->assistants_list, assistant)
     {
-        if ((*assistant)->tick > ASSISTANT_MAX_TICK)
+        if (assistant->tick > ASSISTANT_MAX_TICK)
         {
             list_elem_remove (assistant);
-            hashmap_remove(container->assistants_map, (*assistant)->key);
+            hashmap_remove(container->assistants_map, assistant->key);
             // recyle assistant
             // assistant_recycle(*assistant);
         }
         else
         {
             // warning, user should not queue uv_work in an uv_work callback.
-            assistant_inspector(*assistant);
+            assistant_inspector(assistant);
         }
     }
     uv_mutex_unlock(&container->mutex);
@@ -161,7 +162,7 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
             printf("put new assistant into container's hashmap error...\n");
             return NULL;
         }
-        list_push(container->assistants_list, assistant);
+        list_push(container->assistants_list, *assistant);
     }
     assistant->tick = 0;
     uv_mutex_unlock(&container->mutex);
