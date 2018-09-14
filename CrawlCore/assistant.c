@@ -43,21 +43,21 @@ int assistant_destory(struct assistant *assistant)
     printf("recycle...\n");
     list_each_elem(assistant->task_running_list, task)
     {
-        struct task *t = *task;
+        struct task *t = task;
         list_elem_remove(task);
         hashmap_remove(assistant->tasks_running_map, t->uuid);
         // put back into db
     }
     list_each_elem(assistant->task_ready_list, task)
     {
-        struct task *t = *task;
+        struct task *t = task;
         list_elem_remove(task);
         hashmap_remove(assistant->tasks_ready_map, t->uuid);
         // put back into db
     }
     list_each_elem(assistant->task_done_list, task)
     {
-        struct task *t = *task;
+        struct task *t = task;
         // put back into db
     }
     uv_mutex_unlock(&assistant->mutex);
@@ -71,12 +71,12 @@ void assistant_inspector(struct assistant *assistant)
     assistant->tick ++;
     list_each_elem(assistant->task_running_list, task)
     {
-        struct task *t = *task;
+        struct task *t = task;
         if (t->tick > TASK_MAX_TICK)
         {
             list_elem_remove(task);
             hashmap_remove(assistant->tasks_running_map, t->uuid);
-            list_push(assistant->task_ready_list, task);
+            list_push(assistant->task_ready_list, *task);
             hashmap_put(assistant->tasks_ready_map, t->uuid, t);
         }
         else

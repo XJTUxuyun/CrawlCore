@@ -50,10 +50,10 @@ struct assistant
     long serve_times;
     long tick;
     map_t tasks_ready_map;
-    list(struct task*, task_ready_list);
+    list(struct task, task_ready_list);
     map_t tasks_running_map;
-    list(struct task*, task_running_list);
-    list(struct task*, task_done_list);
+    list(struct task, task_running_list);
+    list(struct task, task_done_list);
 };
 
 /**
