@@ -8,6 +8,29 @@
 
 #include "assistant.h"
 
+int task_init(struct task *task, char *uuid)
+{
+    memset(task, 0, sizeof(struct task));
+    if (NULL == uuid)
+    {
+        uuid_generate(task->uuid);
+    }
+    return 0;
+}
+
+int task_destory(struct task *task)
+{
+    if (task->data)
+    {
+        free(task->data);
+    }
+    if (task)
+    {
+        free(task);
+    }
+    return 0;
+}
+
 int assistant_init(struct assistant *assistant, char *key)
 {
     int r;
@@ -99,7 +122,7 @@ void assistant_container_inspector_cb(uv_work_t *req)
             list_elem_remove (assistant);
             hashmap_remove(container->assistants_map, assistant->key);
             // recyle assistant
-            // assistant_recycle(*assistant);
+            assistant_destory(assistant);
         }
         else
         {
@@ -218,5 +241,17 @@ int assistants_container_init(struct assistants_container *container,
 
 int assistants_container_destory(struct assistants_container *container)
 {
+    uv_mutex_lock(&container->mutex);
+    uv_timer_stop(&container->inspector);  // stop timer
+    list_each_elem(container->assistants_list, assistant)  // destory all assistant
+    {
+        list_elem_remove (assistant);
+        hashmap_remove(container->assistants_map, assistant->key);
+        // recyle assistant
+        assistant_destory(assistant);
+    }
+    hashmap_free(container->assistants_map);  // free hashmap
+    uv_mutex_unlock(&container->mutex);
+    uv_mutex_destroy(&container->mutex);  // destory mutex
     return 0;
 }

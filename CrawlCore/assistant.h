@@ -18,15 +18,15 @@
 #include "uuid4.h"
 #include "db_backend.h"
 
-#define TASK_MAX_TICK 20
-#define ASSISTANT_MAX_TICK 2
+#define TASK_MAX_TICK 2
+#define ASSISTANT_MAX_TICK 3
 
 /**
  * one crawl task
  */
 struct task
 {
-    char uuid[UUID4_LEN];  // unique id;
+    unsigned char uuid[UUID4_LEN];  // unique id;
     int mid;        // distinguish a task.
     char status;    // 0 for unsuccess and other success.
     time_t ctime;   // create time.
@@ -67,6 +67,19 @@ struct assistants_container
     map_t assistants_map;  // named assistant, use key to find the assistant.
     list(struct assistant, assistants_list);
 };
+
+/**
+ * intial struct task.
+ * @param task task instance who want to be initial.
+ * @param uuid designed uuid to initial task instance, if NULL, create one.
+ */
+int task_init(struct task *task, char *uuid);
+
+/**
+ * destory struct task.
+ * @param task task instance who want to be destory.
+ */
+int task_destory(struct task *task);
 
 /**
  * intial struct assistant
