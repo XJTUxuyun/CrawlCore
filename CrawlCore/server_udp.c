@@ -49,6 +49,10 @@ void server_udp_work_after_cb(uv_work_t *req,
     {
         free(req->data);
     }
+    if (req)
+    {
+        free(req);
+    }
 }
 
 /**
@@ -108,10 +112,14 @@ void server_udp_read(uv_udp_t *udp,
         return;
     }
     // true job will be done with threadpool.
-    uv_work_t req;
-    req.data = malloc(sizeof(struct sockaddr) + sizeof(uv_buf_t) + sizeof(ssize_t));  // remember free to avoid leak.
-    assert(req.data != NULL);
-    if (req.data == NULL)
+    uv_work_t *req = malloc(sizeof(uv_work_t));
+    if (NULL == req)
+    {
+        return;
+    }
+    req->data = malloc(sizeof(struct sockaddr) + sizeof(uv_buf_t) + sizeof(ssize_t));  // remember free to avoid leak.
+    assert(req->data != NULL);
+    if (req->data == NULL)
     {
         printf("malloc udp req memory error...\n");
         if (buf->base)
@@ -120,10 +128,10 @@ void server_udp_read(uv_udp_t *udp,
         }
         return;
     }
-    *(struct sockaddr *)((char *)(req.data)) = *addr;
-    *(uv_buf_t *)((char *)(req.data) + sizeof(struct sockaddr)) = *buf;
-    *(ssize_t *)((char *)(req.data) + sizeof(struct sockaddr) + sizeof(uv_buf_t)) = nread;
-    r = uv_queue_work(udp->loop, &req, server_udp_work_cb, server_udp_work_after_cb);
+    *(struct sockaddr *)((char *)(req->data)) = *addr;
+    *(uv_buf_t *)((char *)(req->data) + sizeof(struct sockaddr)) = *buf;
+    *(ssize_t *)((char *)(req->data) + sizeof(struct sockaddr) + sizeof(uv_buf_t)) = nread;
+    r = uv_queue_work(udp->loop, req, server_udp_work_cb, server_udp_work_after_cb);
     assert(0 == r);
     if (r)
     {
@@ -133,9 +141,9 @@ void server_udp_read(uv_udp_t *udp,
         {
             free(buf->base);
         }
-        if (req.data)
+        if (req->data)
         {
-            free(req.data);
+            free(req->data);
         }
         return;
     }

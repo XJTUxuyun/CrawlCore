@@ -17,6 +17,7 @@
 #include "server.h"
 #include "hashmap.h"
 #include <stdlib.h>
+#include "db_backend.h"
 
 static uv_loop_t * loop = NULL;
 Config config;  // 全局配置
@@ -28,10 +29,35 @@ int pfan(any_t item, any_t data)
     return MAP_OK;
 }
 
+void work2_cb(uv_work_t *req)
+{
+    printf("work2cb\n");
 
+    
+}
+void work2_cb_after(uv_work_t *req, int status)
+{
+    printf("work2cbafter\n");
+}
+
+void work1_cb(uv_work_t *req)
+{
+    printf("work1cb\n");
+    uv_work_t work1;
+    work1.data = req->data;
+    //uv_queue_work(req->data, &work1, work2_cb, work2_cb_after);
+    
+}
+void work1_cb_after(uv_work_t *req, int status)
+{
+    printf("work1cbafter\n");
+}
 
 int main(int argc, char ** argv)
 {
+    struct db_backend db;
+    db_backend_init("/Users/wyl/git-workspace/CourtCrawlCore/test.db3", &db);
+    
     int r;
     r = log4c_init();
     assert(0 == r);
@@ -166,8 +192,12 @@ int main(int argc, char ** argv)
     r = assistants_container_init(&container, loop);
     get_assistant_instance(&container, "fuck");
     
+    uv_work_t work;
+    work.data = loop;
+    uv_queue_work(loop, &work, work1_cb, work1_cb_after);
+    
     struct server s;
-    server_init(&s, "test---------", UDP_SERVER, loop, "127.0.0.1", 9001);
+    server_init(&s, "test---------", TCP_SERVER, loop, "127.0.0.1", 9001);
     uv_run(loop, UV_RUN_DEFAULT);
     r = log4c_fini();
     assert(0 == r);

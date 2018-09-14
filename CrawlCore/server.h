@@ -17,6 +17,8 @@
 #include "server_tcp.h"
 #include "server_udp.h"
 #include "tools.h"
+#include "cJSON.h"
+#include "process_request.h"
 
 enum server_type
 {
@@ -37,12 +39,19 @@ struct server
     uv_udp_t udp_handle;
     uv_timer_t monitor_timer;
     void (*server_monitor_cb)(struct server *s);
-    map_t assistants_map;
-    list(struct assistant *, assistants_list);
     list(uv_tcp_t *, tcp_connections_list);
 };
 
-
+/**
+ * initialize a server
+ * @param s the server which want to be initial, user maintain memeory
+ * @param name the server name
+ * @param type server type, UDP or TCP
+ * @param loop server loop
+ * @param ip binding NIC
+ * @param port binding port
+ * return 0 if success
+ */
 int server_init(struct server *s,
                 char *name,
                 enum server_type type,
@@ -51,11 +60,18 @@ int server_init(struct server *s,
                 int port);
 
 /**
- * get a assistant instance, if the key is not in hashmap, create a new one
- * @param s server instance
- * @param key assistant key
+ * destory a server
+ * @param s the server which want to be destory
  */
-struct assistant *server_get_assistant(struct server *s, char *key);
+int server_destory(struct server *s);
+
+/**
+ * monitor resource for remote client, if remote client dead...
+ * @param handle server which will be monitored
+ */
+void server_monitor_cb(uv_timer_t *handle);
+
+
 
 
 #endif /* server_h */

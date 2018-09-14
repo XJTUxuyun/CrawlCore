@@ -24,9 +24,7 @@ int server_init_tcp(struct server *s)
         printf("initial tcp_handle error...\n");
         return r;
     }
-    
     s->tcp_handle.data = s;  // pass server to tcp handle,
-    
     r = uv_tcp_bind(&s->tcp_handle, (struct sockaddr*)&s->addr, 0);
     assert(0 == r);
     if (r)
@@ -34,7 +32,6 @@ int server_init_tcp(struct server *s)
         printf("bind tcp_handle error...\n");
         return r;
     }
-    
     r = uv_listen((uv_stream_t *)&s->tcp_handle, 128, server_tcp_accept_connection);
     assert( 0 == r);
     if (r)
@@ -44,7 +41,6 @@ int server_init_tcp(struct server *s)
     }
     return 0;  // everything is ok.
 }
-
 
 /**
  * callback when a new tcp connection from remote client
@@ -71,7 +67,6 @@ void server_tcp_accept_connection(uv_stream_t *tcp,
         free(tcp_incoming);
         return;
     }
-    
     r = uv_accept(tcp, (uv_stream_t *)(tcp_incoming));
     assert(0 == r);
     if (r)
@@ -80,7 +75,6 @@ void server_tcp_accept_connection(uv_stream_t *tcp,
         free(tcp_incoming);
         return;
     }
-
     tcp_incoming->data = malloc(sizeof(void **) * 2);
     assert(NULL != tcp_incoming->data);
     if (NULL == tcp_incoming->data)
@@ -104,6 +98,18 @@ void server_tcp_accept_connection(uv_stream_t *tcp,
     return;  // everything is ok.
 }
 
+void server_tcp_write_cb(uv_write_t *req, int status)
+{
+    uv_write_t *write = *(void **)req->data;
+    uv_buf_t buf = *(uv_buf_t *)((char *)req->data + sizeof(void **));
+    if (buf.base)
+    {
+        free(buf.base);
+    }
+    free(write->data);
+    free(write);
+}
+
 /**
  * true action on the tcp recieve data.
  * @param req all data encapsulate
@@ -116,9 +122,28 @@ void server_tcp_work_cb(uv_work_t *req)
     ssize_t nread = *((ssize_t *)((char *)req->data + sizeof(void **) * 2 + sizeof(uv_buf_t)));
     struct sockaddr addr = *((struct sockaddr *)((char *)req->data + sizeof(void **) * 2 + sizeof(uv_buf_t) + sizeof(ssize_t)));
     int port = ntohs(((struct sockaddr_in *) & addr)->sin_port);
+    
+    // parse req data
+    // true job
+    uv_buf_t buf1 = process_request(&buf, nread);
+    uv_write_t *write = malloc(sizeof(uv_write_t));
+    if (NULL == write)
+    {
+        return;
+    }
+    write->data = malloc(sizeof(void **) + sizeof(uv_buf_t));
+    if (NULL == write->data)
+    {
+        free(write);
+        return;
+    }
+    *((void **)write->data) = write;
+    
+    *(uv_buf_t *)((char *)write->data + sizeof(void **)) = buf1;
+    uv_write(write, (uv_stream_t *)tcp_incoming, &buf1, 1, server_tcp_write_cb);
     printf("fuck port------>%d\n", port);
     printf("work_cb ->%p\n", tcp_incoming);
-    printf("%d, %s %s\n", nread, buf.base, server->name);
+    printf("%lu, %s %s\n", nread, buf.base, server->name);
 }
 
 /**
@@ -135,6 +160,10 @@ void server_tcp_work_after_cb(uv_work_t *req,
     if (buf.base)
         free(buf.base);
     free(req->data);
+    if (req)
+    {
+        free(req);
+    }
 }
 
 
@@ -169,6 +198,13 @@ void server_tcp_read_cb(uv_stream_t* handle,
     if (nread < 0)  // tcp read error, maybe close
     {
         uv_close(((void **)(handle->data))[1], tcp_connection_close_cb);
+        return;
+    }
+    
+    if (nread == 0) // read nothing or shutdown by peer client
+    {
+        uv_close(((void **)(handle->data))[1], tcp_connection_close_cb);
+        return;
     }
     
     int name_lens;
@@ -181,35 +217,30 @@ void server_tcp_read_cb(uv_stream_t* handle,
         return;
     }
     
-    uv_work_t req;
-    req.data = malloc(sizeof(void **) * 2 + sizeof(uv_buf_t) + sizeof(ssize_t) + sizeof(struct sockaddr));
-    assert(NULL != req.data);
-    if (NULL == req.data)
+    uv_work_t *req = malloc(sizeof(uv_work_t));
+    if (NULL == req)
+    {
+        return;
+    }
+    req->data = malloc(sizeof(void **) * 2 + sizeof(uv_buf_t) + sizeof(ssize_t) + sizeof(struct sockaddr));
+    assert(NULL != req->data);
+    if (NULL == req->data)
     {
         printf("malloc tcp work data error...\n");
         return;
     }
-    memcpy(req.data, handle->data, sizeof(void **) * 2);
-    *((uv_buf_t *)((char *)req.data + sizeof(void **) * 2)) = *buf;
-    *((ssize_t *)((char *)req.data + sizeof(void **) * 2 + sizeof(uv_buf_t))) = nread;
-    *((struct sockaddr *)((char *)req.data + sizeof(void **) * 2 + sizeof(uv_buf_t) + sizeof(ssize_t))) = addr;
-    r = uv_queue_work(handle->loop, &req, server_tcp_work_cb, server_tcp_work_after_cb);
+    memcpy(req->data, handle->data, sizeof(void **) * 2);
+    *((uv_buf_t *)((char *)req->data + sizeof(void **) * 2)) = *buf;
+    *((ssize_t *)((char *)req->data + sizeof(void **) * 2 + sizeof(uv_buf_t))) = nread;
+    *((struct sockaddr *)((char *)req->data + sizeof(void **) * 2 + sizeof(uv_buf_t) + sizeof(ssize_t))) = addr;
+    r = uv_queue_work(handle->loop, req, server_tcp_work_cb, server_tcp_work_after_cb);
     assert(0 == r);
     if (r)
     {
         printf("queue tcp work error...\n");
-        free(req.data);
+        free(req->data);
     }
 }
 
-/**
- * close a dead tcp connection, collect resource
- * @param handle the tcp handle which need close
- */
-void assistant_tcp_close_cb(uv_handle_t *handle)
-{
-    uv_tcp_t * tcp = (uv_tcp_t *)handle;
-    // printf("嘎嘎->%s\n", ((struct assistant *)tcp->data)->remote_ip);
-}
 
 

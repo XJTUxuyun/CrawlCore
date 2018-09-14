@@ -16,18 +16,25 @@
 #include "hashmap.h"
 #include "list.h"
 #include "uuid4.h"
+#include "db_backend.h"
 
-#define TASK_MAX_JIFFIES 20
-#define ASSISTANT_MAX_JIFFIES 100
+#define TASK_MAX_TICK 20
+#define ASSISTANT_MAX_TICK 2
 
+/**
+ * one crawl task
+ */
 struct task
 {
-    char uuid[UUID4_LEN];
-    char type;  // 0 for get and 1 for post.
-    void *data;  // our main purpose is a general queue, so we donot care data content, user maintain it.
-    char status;  // 0 for unsuccess and other success.
-    int try_times;
-    int jiffies;
+    char uuid[UUID4_LEN];  // unique id;
+    int mid;        // distinguish a task.
+    char status;    // 0 for unsuccess and other success.
+    time_t ctime;   // create time.
+    time_t mtime;   // modify time.
+    int retry;      // retry times.
+    void *data;     // our main purpose is a general queue, so we donot care data content, user maintain it.
+    int len;        // data length.
+    int tick;       // task life time.
 };
 
 /**
@@ -36,18 +43,22 @@ struct task
  */
 struct assistant
 {
-    uv_mutex_t mutex;  // consistency
+    uv_mutex_t mutex;         // consistency
     char key[128];
     time_t frist_serve_time;  // long
     time_t last_serve_time;   // long
     long serve_times;
-    long jiffies;
+    long tick;
     map_t tasks_ready_map;
-    list(struct task *, tasks_ready_list);
+    list(struct task *, task_ready_list);
     map_t tasks_running_map;
     list(struct task *, task_running_list);
+    list(struct task *, task_done_list);
 };
 
+/**
+ * assistants container
+ */
 struct assistants_container
 {
     uv_loop_t *loop;
@@ -63,10 +74,33 @@ struct assistants_container
  */
 int assistant_init(struct assistant *assistant, char *key);
 
+/**
+ * destory assistant
+ * @param assistant assitant instance
+ */
+int assistant_destory(struct assistant *assistant);
+
+/**
+ * initial assistants contanier
+ * @param container container instance
+ * @param loop container ref loop
+ */
 int assistants_container_init(struct assistants_container *container,
                               uv_loop_t *loop);
 
-struct assistant *get_assistant_instance(struct assistants_container *container, char *key);
+/**
+ * destory assistants container
+ * @param container container instance
+ */
+int assistants_container_destory(struct assistants_container *container);
+
+/**
+ * get a assistant instance from assistants container
+ * @param container container
+ * @param key assistant key
+ */
+struct assistant *get_assistant_instance(struct assistants_container *container,
+                                         char *key);
 
 
 

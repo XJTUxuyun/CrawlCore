@@ -17,12 +17,14 @@
 		390AEFC421357597003AF53A /* server_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC221357597003AF53A /* server_tcp.c */; };
 		390AEFC7213575E8003AF53A /* server_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC5213575E8003AF53A /* server_udp.c */; };
 		390AEFCA21357DD1003AF53A /* tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC821357DD1003AF53A /* tools.c */; };
-		390AEFCC21394D08003AF53A /* tesc_tcp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFCB21394D08003AF53A /* tesc_tcp.c */; };
 		390AEFCF213A425F003AF53A /* uuid4.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFCE213A425F003AF53A /* uuid4.c */; };
 		397366F5212A6193003642F7 /* libuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366F4212A6193003642F7 /* libuv.a */; };
 		397366FD212A6A2A003642F7 /* liblog4c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366FC212A6A2A003642F7 /* liblog4c.a */; };
 		39736700212AA082003642F7 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366FF212AA082003642F7 /* libxml2.tbd */; };
 		39736709212AF565003642F7 /* libjson-c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 39736708212AF565003642F7 /* libjson-c.a */; };
+		39CE34DF2146651800451031 /* db_backend.c in Sources */ = {isa = PBXBuildFile; fileRef = 39CE34DD2146651800451031 /* db_backend.c */; };
+		39CE34E22147E5CB00451031 /* cJSON.c in Sources */ = {isa = PBXBuildFile; fileRef = 39CE34E12147E5CB00451031 /* cJSON.c */; };
+		39CE34E52148939900451031 /* process_request.c in Sources */ = {isa = PBXBuildFile; fileRef = 39CE34E32148939900451031 /* process_request.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -57,7 +59,6 @@
 		390AEFC6213575E8003AF53A /* server_udp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = server_udp.h; sourceTree = "<group>"; };
 		390AEFC821357DD1003AF53A /* tools.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tools.c; sourceTree = "<group>"; };
 		390AEFC921357DD1003AF53A /* tools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
-		390AEFCB21394D08003AF53A /* tesc_tcp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = tesc_tcp.c; sourceTree = "<group>"; };
 		390AEFCD213A425F003AF53A /* uuid4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uuid4.h; sourceTree = "<group>"; };
 		390AEFCE213A425F003AF53A /* uuid4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = uuid4.c; sourceTree = "<group>"; };
 		397366F4212A6193003642F7 /* libuv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuv.a; path = "../../../../usr/local/Cellar/libuv/HEAD-69c43d9/lib/libuv.a"; sourceTree = "<group>"; };
@@ -67,6 +68,12 @@
 		39736701212AA588003642F7 /* config.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		39736708212AF565003642F7 /* libjson-c.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libjson-c.a"; path = "../../../../usr/local/Cellar/json-c/0.13.1/lib/libjson-c.a"; sourceTree = "<group>"; };
 		398B7E8D21167C580024CD8B /* CrawlCore */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = CrawlCore; sourceTree = BUILT_PRODUCTS_DIR; };
+		39CE34DD2146651800451031 /* db_backend.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = db_backend.c; sourceTree = "<group>"; };
+		39CE34DE2146651800451031 /* db_backend.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = db_backend.h; sourceTree = "<group>"; };
+		39CE34E02147E5CB00451031 /* cJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cJSON.h; sourceTree = "<group>"; };
+		39CE34E12147E5CB00451031 /* cJSON.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cJSON.c; sourceTree = "<group>"; };
+		39CE34E32148939900451031 /* process_request.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = process_request.c; sourceTree = "<group>"; };
+		39CE34E42148939900451031 /* process_request.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = process_request.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,7 +145,12 @@
 				390AEFC921357DD1003AF53A /* tools.h */,
 				390AEFCE213A425F003AF53A /* uuid4.c */,
 				390AEFCD213A425F003AF53A /* uuid4.h */,
-				390AEFCB21394D08003AF53A /* tesc_tcp.c */,
+				39CE34DD2146651800451031 /* db_backend.c */,
+				39CE34DE2146651800451031 /* db_backend.h */,
+				39CE34E12147E5CB00451031 /* cJSON.c */,
+				39CE34E02147E5CB00451031 /* cJSON.h */,
+				39CE34E32148939900451031 /* process_request.c */,
+				39CE34E42148939900451031 /* process_request.h */,
 			);
 			path = CrawlCore;
 			sourceTree = "<group>";
@@ -202,14 +214,16 @@
 				390AEFA721316614003AF53A /* server.c in Sources */,
 				390AEFC7213575E8003AF53A /* server_udp.c in Sources */,
 				390AEF1A212D7D64003AF53A /* main.c in Sources */,
+				39CE34E52148939900451031 /* process_request.c in Sources */,
 				390AEFCF213A425F003AF53A /* uuid4.c in Sources */,
+				39CE34E22147E5CB00451031 /* cJSON.c in Sources */,
 				390AEFCA21357DD1003AF53A /* tools.c in Sources */,
 				390AEFB8213527F6003AF53A /* list.c in Sources */,
 				390AEFC421357597003AF53A /* server_tcp.c in Sources */,
 				390AEFA621316614003AF53A /* config.c in Sources */,
-				390AEFCC21394D08003AF53A /* tesc_tcp.c in Sources */,
 				390AEFB52134F13A003AF53A /* hashmap.c in Sources */,
 				390AEFA821316614003AF53A /* main1.c in Sources */,
+				39CE34DF2146651800451031 /* db_backend.c in Sources */,
 				390AEFB2213426A8003AF53A /* assistant.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

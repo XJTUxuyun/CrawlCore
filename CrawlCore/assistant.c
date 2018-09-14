@@ -8,10 +8,6 @@
 
 #include "assistant.h"
 
-/**
- * intial struct assistant
- * @param assistant target variable
- */
 int assistant_init(struct assistant *assistant, char *key)
 {
     int r;
@@ -24,7 +20,7 @@ int assistant_init(struct assistant *assistant, char *key)
         return r;
     }
     strcpy(assistant->key, key);
-    assistant->jiffies = 0;
+    assistant->tick = 0;
     assistant->tasks_ready_map = hashmap_new();
     if (NULL == assistant->tasks_ready_map)
     {
@@ -40,96 +36,104 @@ int assistant_init(struct assistant *assistant, char *key)
     return 0;
 }
 
-
+int assistant_destory(struct assistant *assistant)
+{
+    // remember free memory
+    uv_mutex_lock(&assistant->mutex);
+    printf("recycle...\n");
+    list_each_elem(assistant->task_running_list, task)
+    {
+        struct task *t = *task;
+        list_elem_remove(task);
+        hashmap_remove(assistant->tasks_running_map, t->uuid);
+        // put back into db
+    }
+    list_each_elem(assistant->task_ready_list, task)
+    {
+        struct task *t = *task;
+        list_elem_remove(task);
+        hashmap_remove(assistant->tasks_ready_map, t->uuid);
+        // put back into db
+    }
+    list_each_elem(assistant->task_done_list, task)
+    {
+        struct task *t = *task;
+        // put back into db
+    }
+    uv_mutex_unlock(&assistant->mutex);
+    return 0;
+}
 
 void assistant_inspector(struct assistant *assistant)
 {
     uv_mutex_lock(&assistant->mutex);
+    assistant->tick ++;
     list_each_elem(assistant->task_running_list, task)
     {
         struct task *t = *task;
-        if (t->jiffies > TASK_MAX_JIFFIES)
+        if (t->tick > TASK_MAX_TICK)
         {
             list_elem_remove(task);
             hashmap_remove(assistant->tasks_running_map, t->uuid);
-            list_push(assistant->tasks_ready_list, task);
+            list_push(assistant->task_ready_list, task);
             hashmap_put(assistant->tasks_ready_map, t->uuid, t);
         }
         else
         {
-            t->jiffies ++;
+            t->tick ++;
         }
     }
     uv_mutex_unlock(&assistant->mutex);
 }
 
-void assistant_inspector_cb(uv_work_t *req)
+void assistant_container_inspector_cb(uv_work_t *req)
 {
-    assistant_inspector(req->data);
-}
-
-void assistant_inspector_after_cb(uv_work_t *req, int status)
-{
-    // do nothing
-}
-
-
-
-
-void assistant_container_inspector(struct assistants_container *container)
-{
-    int r;
+    struct assistants_container *container = req->data;
+    printf("assistant container inspector...\n");
     uv_mutex_lock(&container->mutex);
     list_each_elem(container->assistants_list, assistant)
     {
-        if ((*assistant)->jiffies > ASSISTANT_MAX_JIFFIES)
+        if ((*assistant)->tick > ASSISTANT_MAX_TICK)
         {
             list_elem_remove (assistant);
             hashmap_remove(container->assistants_map, (*assistant)->key);
             // recyle assistant
-            uv_work_t work;
-            work.data = *assistant;
+            // assistant_recycle(*assistant);
         }
         else
         {
-            uv_work_t work;
-            work.data = *assistant;
-            r = uv_queue_work(container->loop, &work, assistant_inspector_cb, assistant_inspector_after_cb);
-            if (r)
-            {
-                printf("post assistant_inspector error...\n");
-            }
+            // warning, user should not queue uv_work in an uv_work callback.
+            assistant_inspector(*assistant);
         }
     }
     uv_mutex_unlock(&container->mutex);
 }
 
-void assistant_container_inspector_cb(uv_work_t *req)
-{
-    printf("assistant container inspector...\n");
-    assistant_container_inspector(req->data);
-}
-
 void assistant_container_inspector_after_cb(uv_work_t *req, int status)
 {
-    // do nothing
+    // clean memeory
+    if (req)
+    {
+        free(req);
+    }
 }
 
 void assistant_container_inspector_timer_cb(uv_timer_t *handle)
 {
+    int r;
     struct assistants_container *container = handle->data;
-    uv_work_t req;
-    req.data = handle->data;
-    int r = uv_queue_work(container->loop, &req, assistant_container_inspector_cb, assistant_container_inspector_after_cb);
+    uv_work_t *req = malloc(sizeof(uv_work_t));
+    if (NULL == req)
+    {
+        printf("malloc uv_work_t error...\n");
+        return;
+    }
+    req->data = container;
+    r = uv_queue_work(container->loop, req, assistant_container_inspector_cb, assistant_container_inspector_after_cb);
     if (r)
     {
         printf("queue assistant container inspector error...\n");
     }
-}
-
-int assistant_recycle(struct assistant *assistant)
-{
-    return 0;
 }
 
 struct assistant *get_assistant_instance(struct assistants_container *container, char *key)
@@ -145,7 +149,6 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
             printf("malloc struct assistant memeory error...\n");
             return NULL;
         }
-    
         r = assistant_init(assistant, key);
         if (r)
         {
@@ -160,16 +163,12 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
         }
         list_push(container->assistants_list, assistant);
     }
-    assistant->jiffies = 0;
+    assistant->tick = 0;
     uv_mutex_unlock(&container->mutex);
     return assistant;
 }
 
-/**
- * initial assistant contanier
- * @param container container instance
- * @param loop container ref loop
- */
+
 int assistants_container_init(struct assistants_container *container,
                               uv_loop_t *loop)
 {
@@ -213,5 +212,10 @@ int assistants_container_init(struct assistants_container *container,
         uv_timer_stop(&container->inspector);
         return -1;
     }
+    return 0;
+}
+
+int assistants_container_destory(struct assistants_container *container)
+{
     return 0;
 }
