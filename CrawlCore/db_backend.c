@@ -12,28 +12,20 @@
 int db_backend_init(char *db_path, struct db_backend *db_backend)
 {
     int r;
-    const char *err_msg;
+    char *err_msg;
     memset(db_backend, 0 , sizeof(struct db_backend));
-    r = sqlite3_open(db_path, &db_backend->db);
+    r = sqlite3_open_v2(db_path, &db_backend->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
     if (SQLITE_OK != r)
     {
-        err_msg = sqlite3_errmsg(db_backend->db);
-        printf("open->%s error, %s\n", db_path, err_msg);
-        sqlite3_free(err_msg);
+        printf("open->%s error, %s\n", db_path, sqlite3_errmsg(db_backend->db));
         return -1;
     }
-    db_backend->mutex = sqlite3_mutex_alloc(SQLITE_MUTEX_FAST);
-    if (NULL == db_backend->mutex)
-    {
-        printf("create sqlite mutext error.\n");
-        sqlite3_close(db_backend->db);
-        return -1;
-    }
-    char *sql = "create table if not exists test(uuid char(37) primary key, mid int, status char, ctime long, mtime long, retry int, data blob)";
+    char *sql = "create table if not exists test(uuid char(37) primary key not null, mid int, status int, ctime long, mtime long, retry int, data text)";
     r = sqlite3_exec(db_backend->db, sql, NULL, 0, &err_msg);
     if (SQLITE_OK != r)
     {
         printf("create table error, %s.\n", err_msg);
+        sqlite3_free(err_msg);
         return -1;
     }
     return 0;
@@ -41,7 +33,6 @@ int db_backend_init(char *db_path, struct db_backend *db_backend)
 
 int db_backend_destory(struct db_backend *db_backend)
 {
-    sqlite3_mutex_free(db_backend->mutex);
     sqlite3_close(db_backend->db);
     return 0;
 }
@@ -49,48 +40,64 @@ int db_backend_destory(struct db_backend *db_backend)
 int db_backend_put(struct db_backend *db_backend, struct task *task)
 {
     int r;
-    const char *err_msg;
-    sqlite3_mutex_enter(db_backend->mutex);
-    sqlite3_stmt *stat;
-    char *sql = "insert or replace into test(uuid, mid, status, ctime, mtime, retry, data) values(%s, %d, %c, %l, %l, %d, ?)";
-    char tmp[256];
-    sprintf(tmp, sql, task->uuid, task->mid, task->status, task->ctime, task->mtime, task->retry);
-    printf("%s\n", task->uuid);
-    r = sqlite3_prepare(db_backend->db, tmp, -1, &stat, 0 );
+    char *err_msg;
+    sqlite3_stmt *stmt;
+    char *sql = "insert or replace into test(uuid, mid, status, ctime, mtime, retry, data) values(?, ?, ?, ?, ?, ?, ?)";
+    while( (r = sqlite3_prepare_v2(db_backend->db, sql, -1, &stmt, NULL)) != SQLITE_OK);
     if (SQLITE_OK != r)
     {
-        err_msg = sqlite3_errmsg(db_backend->db);
-        printf("error1->%s\n", err_msg);
-        //sqlite3_free(err_msg);
-        sqlite3_mutex_leave(db_backend->mutex);
+        printf("db_backend_put prepare error->%s\n", sqlite3_errmsg(db_backend->db));
         return -1;
     }
-    r = sqlite3_bind_blob(stat, 1, task->data, task->len, NULL);
+    r = sqlite3_bind_text(stmt, 1, task->uuid, UUID4_LEN, NULL);
     if (SQLITE_OK != r)
     {
         goto bind_err;
     }
-    r = sqlite3_step(stat);
+    r = sqlite3_bind_int(stmt, 2, task->mid);
+    if (SQLITE_OK != r)
+    {
+        goto bind_err;
+    }
+    r = sqlite3_bind_int(stmt, 3, task->status);
+    if (SQLITE_OK != r)
+    {
+        goto bind_err;
+    }
+    r = sqlite3_bind_int64(stmt, 4, task->ctime);
+    if (SQLITE_OK != r)
+    {
+        goto bind_err;
+    }
+    r = sqlite3_bind_int64(stmt, 5, task->mtime);
+    if (SQLITE_OK != r)
+    {
+        goto bind_err;
+    }
+    r = sqlite3_bind_int64(stmt, 6, task->retry);
+    if (SQLITE_OK != r)
+    {
+        goto bind_err;
+    }
+    r = sqlite3_bind_text(stmt, 7, task->data, task->len, NULL);
+    if (SQLITE_OK != r)
+    {
+        goto bind_err;
+    }
+    while(SQLITE_DONE != (r = sqlite3_step(stmt)));
     if (SQLITE_DONE != r)
     {
         goto step_err;
     }
-    sqlite3_finalize(stat);
-    sqlite3_mutex_leave(db_backend->mutex);
+    sqlite3_finalize(stmt);
     return 0;
 bind_err:
-    err_msg = sqlite3_errmsg(db_backend->db);
-    printf("error->%s\n", err_msg);
-    sqlite3_free(err_msg);
-    sqlite3_finalize(stat);
-    sqlite3_mutex_leave(db_backend->mutex);
+    printf("db_backend_put bind error->%s\n", sqlite3_errmsg(db_backend->db));
+    sqlite3_finalize(stmt);
     return -1;
 step_err:
-    err_msg = sqlite3_errmsg(db_backend->db);
-    printf("error->%s\n", err_msg);
-    sqlite3_free(err_msg);
-    sqlite3_finalize(stat);
-    sqlite3_mutex_leave(db_backend->mutex);
+    printf("error2->%s\n", sqlite3_errmsg(db_backend->db));
+    sqlite3_finalize(stmt);
     return -1;
 }
 
@@ -104,35 +111,38 @@ int db_backend_puts(struct db_backend *db_backend, list(struct task, task))
     int r;
     char *err_msg;
     sqlite3_stmt *stmt;
-    sqlite3_mutex_enter(db_backend->mutex);
     list_each_elem(task, t)
     {
         
     }
-    sqlite3_mutex_leave(db_backend->mutex);
     return 0;
 }
 
 int db_backend_get(struct db_backend *db_backend, struct task *task)
 {
     int r;
-    char *err_msg;
-    int index = 10;
-    sqlite3_mutex_enter(db_backend->mutex);
-    sqlite3_stmt *stat;
+    sqlite3_stmt *stmt;
     char *sql = "select * from test";
-    r = sqlite3_prepare(db_backend->db, sql, -1, &stat, 0);
+    while( (r = sqlite3_prepare_v2(db_backend->db, sql, -1, &stmt, NULL)) != SQLITE_OK);
     if (SQLITE_OK != r)
     {
-        err_msg = sqlite3_errmsg(db_backend->db);
-        printf("error->%s\n", err_msg);
-        sqlite3_free(err_msg);
-        sqlite3_mutex_leave(db_backend->mutex);
-        sqlite3_finalize(stat);
+        printf("db_backend_get error->%s\n", sqlite3_errmsg(db_backend->db));
+        sqlite3_finalize(stmt);
         return -1;
     }
-
-    
-    sqlite3_mutex_leave(db_backend->mutex);
+    while (SQLITE_ROW != (r = sqlite3_step(stmt)));
+    const unsigned char *uuid = sqlite3_column_text(stmt, 0);
+    strcpy(task->uuid, uuid);
+    task->mid = sqlite3_column_int(stmt, 1);
+    task->status = sqlite3_column_int(stmt, 2);
+    task->ctime = sqlite3_column_int64(stmt, 3);
+    task->mtime = sqlite3_column_int64(stmt, 4);
+    task->retry = sqlite3_column_int(stmt, 5);
+    const unsigned char *data = sqlite3_column_text(stmt, 6);
+    int len = sqlite3_column_bytes(stmt, 6);
+    task->len = len;
+    task->data = malloc(sizeof(len));
+    memcpy(task->data, data, len);
+    sqlite3_finalize(stmt);
     return 0;
 }

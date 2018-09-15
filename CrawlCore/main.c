@@ -58,10 +58,17 @@ int main(int argc, char ** argv)
     struct db_backend db;
     db_backend_init("/Users/wyl/git-workspace/CourtCrawlCore/test.db3", &db);
     struct task task;
-    task.mid = 1;
+    
+    task_init(&task, NULL);
+    task.mid = 10;
     task.data = "fuck";
-    task_init(&task, "1111");
+    task.len = strlen(task.data) + 1;
     db_backend_put(&db, &task);
+    struct task task1;
+    task_init(&task1, NULL);
+    
+    db_backend_get(&db, &task1);
+    printf("task1->uuid-> %s  data->%s\n", task1.uuid, task1.data);
     int r;
     r = log4c_init();
     assert(0 == r);
@@ -193,7 +200,7 @@ int main(int argc, char ** argv)
     loop = uv_default_loop();
     
     struct assistants_container container;
-    r = assistants_container_init(&container, loop);
+    r = assistants_container_init(&container, loop, &db);
     get_assistant_instance(&container, "fuck");
     
     uv_work_t work;

@@ -17,6 +17,7 @@
 #include "list.h"
 #include "uuid4.h"
 #include "db_backend.h"
+#include "db_backend.h"
 
 #define TASK_MAX_TICK 2
 #define ASSISTANT_MAX_TICK 3
@@ -28,7 +29,7 @@ struct task
 {
     unsigned char uuid[UUID4_LEN];  // unique id;
     int mid;        // distinguish a task.
-    char status;    // 0 for unsuccess and other success.
+    int status;    // 0 for unsuccess and other success.
     time_t ctime;   // create time.
     time_t mtime;   // modify time.
     int retry;      // retry times.
@@ -54,6 +55,7 @@ struct assistant
     map_t tasks_running_map;
     list(struct task, task_running_list);
     list(struct task, task_done_list);
+    struct db_backend *db_backend;
 };
 
 /**
@@ -66,6 +68,7 @@ struct assistants_container
     uv_timer_t inspector;
     map_t assistants_map;  // named assistant, use key to find the assistant.
     list(struct assistant, assistants_list);
+    struct db_backend *db_backend;
 };
 
 /**
@@ -84,8 +87,9 @@ int task_destory(struct task *task);
 /**
  * intial struct assistant
  * @param assistant target variable
+ * @param db_backend database backend
  */
-int assistant_init(struct assistant *assistant, char *key);
+int assistant_init(struct assistant *assistant, char *key, struct db_backend *db_backend);
 
 /**
  * destory assistant
@@ -97,9 +101,10 @@ int assistant_destory(struct assistant *assistant);
  * initial assistants contanier
  * @param container container instance
  * @param loop container ref loop
+ * @param db_backend database backend
  */
 int assistants_container_init(struct assistants_container *container,
-                              uv_loop_t *loop);
+                              uv_loop_t *loop, struct db_backend *db_backend);
 
 /**
  * destory assistants container

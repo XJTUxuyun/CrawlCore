@@ -13,12 +13,18 @@ int task_init(struct task *task, char *uuid)
     memset(task, 0, sizeof(struct task));
     if (NULL == uuid)
     {
-        uuid_generate(task->uuid);
+        uuid4_generate(task->uuid);
     }
     else
     {
         memcpy(task->uuid, uuid, strlen(uuid));
     }
+    time(&task->ctime);
+    time(&task->mtime);
+    task->status = 0;
+    task->retry = 0;
+    task->tick = 0;
+    task->len = 0;
     return 0;
 }
 
@@ -35,7 +41,7 @@ int task_destory(struct task *task)
     return 0;
 }
 
-int assistant_init(struct assistant *assistant, char *key)
+int assistant_init(struct assistant *assistant, char *key, struct db_backend *db_backend)
 {
     int r;
     memset(assistant, 0, sizeof(struct assistant));
@@ -60,6 +66,12 @@ int assistant_init(struct assistant *assistant, char *key)
         printf("create assistant task running map error...\n");
         return -1;
     }
+    if (NULL == db_backend)
+    {
+        printf("assistant designed db_backend is NULL...\n");
+        return -1;
+    }
+    assistant->db_backend = db_backend;
     return 0;
 }
 
@@ -70,22 +82,25 @@ int assistant_destory(struct assistant *assistant)
     printf("recycle...\n");
     list_each_elem(assistant->task_running_list, task)
     {
-        struct task *t = task;
         list_elem_remove(task);
-        hashmap_remove(assistant->tasks_running_map, t->uuid);
-        // put back into db
+        hashmap_remove(assistant->tasks_running_map, task->uuid);
+        db_backend_put(assistant->db_backend, task);
+        task_destory(task);
     }
     list_each_elem(assistant->task_ready_list, task)
     {
-        struct task *t = task;
         list_elem_remove(task);
-        hashmap_remove(assistant->tasks_ready_map, t->uuid);
+        hashmap_remove(assistant->tasks_ready_map, task->uuid);
         // put back into db
+        db_backend_put(assistant->db_backend, task);
+        task_destory(task);
     }
     list_each_elem(assistant->task_done_list, task)
     {
-        struct task *t = task;
+        list_elem_remove(task);
         // put back into db
+        db_backend_put(assistant->db_backend, task);
+        task_destory(task);
     }
     uv_mutex_unlock(&assistant->mutex);
     return 0;
@@ -177,7 +192,7 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
             printf("malloc struct assistant memeory error...\n");
             return NULL;
         }
-        r = assistant_init(assistant, key);
+        r = assistant_init(assistant, key, container->db_backend);
         if (r)
         {
             printf("initial assistant error...\n");
@@ -198,7 +213,8 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
 
 
 int assistants_container_init(struct assistants_container *container,
-                              uv_loop_t *loop)
+                              uv_loop_t *loop,
+                              struct db_backend* db_backend)
 {
     int r;
     memset(container, 0, sizeof(struct assistants_container));
@@ -240,6 +256,14 @@ int assistants_container_init(struct assistants_container *container,
         uv_timer_stop(&container->inspector);
         return -1;
     }
+    if (NULL == db_backend)
+    {
+        printf("assistant container designed db_backend is NULL...\n");
+        uv_mutex_destroy(&container->mutex);
+        uv_timer_stop(&container->inspector);
+        return -1;
+    }
+    container->db_backend = db_backend;
     return 0;
 }
 
