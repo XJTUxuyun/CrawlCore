@@ -109,7 +109,7 @@ int assistant_destory(struct assistant *assistant)
 
 void assistant_inspector(struct assistant *assistant)
 {
-    printf("assistant inspector...\n");
+    printf("assistant inspector, key->\"%s\" p->%p\n", assistant->key, assistant);
     uv_mutex_lock(&assistant->mutex);
     assistant->tick ++;
     list_each_elem(assistant->task_running_list, task)
@@ -184,8 +184,10 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
     int r;
     struct assistant *assistant;
     uv_mutex_lock(&container->mutex);
-    if (MAP_OK != hashmap_get(container->assistants_map, key, (void **)(&assistant)))
+    r = hashmap_get(container->assistants_map, key, (void **)(&assistant));
+    if (MAP_OK != r)
     {
+        printf("assistant is not in assistant_map, create one...\n");
         assistant = malloc(sizeof(struct assistant));
         if (NULL == assistant)
         {

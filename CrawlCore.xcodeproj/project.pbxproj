@@ -18,6 +18,8 @@
 		390AEFC7213575E8003AF53A /* server_udp.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC5213575E8003AF53A /* server_udp.c */; };
 		390AEFCA21357DD1003AF53A /* tools.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFC821357DD1003AF53A /* tools.c */; };
 		390AEFCF213A425F003AF53A /* uuid4.c in Sources */ = {isa = PBXBuildFile; fileRef = 390AEFCE213A425F003AF53A /* uuid4.c */; };
+		396ACF4B214E3E5E00EEFEC2 /* hashset_itr.c in Sources */ = {isa = PBXBuildFile; fileRef = 396ACF48214E3E5E00EEFEC2 /* hashset_itr.c */; };
+		396ACF4C214E3E5E00EEFEC2 /* hashset.c in Sources */ = {isa = PBXBuildFile; fileRef = 396ACF49214E3E5E00EEFEC2 /* hashset.c */; };
 		397366F5212A6193003642F7 /* libuv.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366F4212A6193003642F7 /* libuv.a */; };
 		397366FD212A6A2A003642F7 /* liblog4c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366FC212A6A2A003642F7 /* liblog4c.a */; };
 		39736700212AA082003642F7 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 397366FF212AA082003642F7 /* libxml2.tbd */; };
@@ -61,6 +63,10 @@
 		390AEFC921357DD1003AF53A /* tools.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = tools.h; sourceTree = "<group>"; };
 		390AEFCD213A425F003AF53A /* uuid4.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = uuid4.h; sourceTree = "<group>"; };
 		390AEFCE213A425F003AF53A /* uuid4.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = uuid4.c; sourceTree = "<group>"; };
+		396ACF47214E3E5E00EEFEC2 /* hashset_itr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hashset_itr.h; sourceTree = "<group>"; };
+		396ACF48214E3E5E00EEFEC2 /* hashset_itr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hashset_itr.c; sourceTree = "<group>"; };
+		396ACF49214E3E5E00EEFEC2 /* hashset.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = hashset.c; sourceTree = "<group>"; };
+		396ACF4A214E3E5E00EEFEC2 /* hashset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hashset.h; sourceTree = "<group>"; };
 		397366F4212A6193003642F7 /* libuv.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libuv.a; path = "../../../../usr/local/Cellar/libuv/HEAD-69c43d9/lib/libuv.a"; sourceTree = "<group>"; };
 		397366FC212A6A2A003642F7 /* liblog4c.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblog4c.a; path = ../../../../usr/local/Cellar/log4c/1.2.4/lib/liblog4c.a; sourceTree = "<group>"; };
 		397366FE212A8EDF003642F7 /* log4crc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = log4crc; sourceTree = "<group>"; };
@@ -151,6 +157,10 @@
 				39CE34E02147E5CB00451031 /* cJSON.h */,
 				39CE34E32148939900451031 /* process_request.c */,
 				39CE34E42148939900451031 /* process_request.h */,
+				396ACF48214E3E5E00EEFEC2 /* hashset_itr.c */,
+				396ACF47214E3E5E00EEFEC2 /* hashset_itr.h */,
+				396ACF49214E3E5E00EEFEC2 /* hashset.c */,
+				396ACF4A214E3E5E00EEFEC2 /* hashset.h */,
 			);
 			path = CrawlCore;
 			sourceTree = "<group>";
@@ -213,6 +223,7 @@
 			files = (
 				390AEFA721316614003AF53A /* server.c in Sources */,
 				390AEFC7213575E8003AF53A /* server_udp.c in Sources */,
+				396ACF4B214E3E5E00EEFEC2 /* hashset_itr.c in Sources */,
 				390AEF1A212D7D64003AF53A /* main.c in Sources */,
 				39CE34E52148939900451031 /* process_request.c in Sources */,
 				390AEFCF213A425F003AF53A /* uuid4.c in Sources */,
@@ -220,6 +231,7 @@
 				390AEFCA21357DD1003AF53A /* tools.c in Sources */,
 				390AEFB8213527F6003AF53A /* list.c in Sources */,
 				390AEFC421357597003AF53A /* server_tcp.c in Sources */,
+				396ACF4C214E3E5E00EEFEC2 /* hashset.c in Sources */,
 				390AEFA621316614003AF53A /* config.c in Sources */,
 				390AEFB52134F13A003AF53A /* hashmap.c in Sources */,
 				390AEFA821316614003AF53A /* main1.c in Sources */,

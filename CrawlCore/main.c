@@ -10,17 +10,18 @@
 #include <stdio.h>
 #include <log4c.h>
 #include <uv.h>
-#include "config.h"
+//#include "config.h"
 #include "server.h"
 #include "version.h"
 #include <time.h>
 #include "server.h"
 #include "hashmap.h"
+#include "hashset.h"
 #include <stdlib.h>
 #include "db_backend.h"
 
 static uv_loop_t * loop = NULL;
-Config config;  // 全局配置
+//Config config;  // 全局配置
 
 
 int pfan(any_t item, any_t data)
@@ -29,40 +30,12 @@ int pfan(any_t item, any_t data)
     return MAP_OK;
 }
 
-void work2_cb(uv_work_t *req)
-{
-    printf("work2cb\n");
+struct assistants_container container;
 
-    
-}
-void work2_cb_after(uv_work_t *req, int status)
-{
-    printf("work2cbafter\n");
-}
-
-void work1_cb(uv_work_t *req)
-{
-    printf("work1cb\n");
-    uv_work_t work1;
-    work1.data = req->data;
-    //uv_queue_work(req->data, &work1, work2_cb, work2_cb_after);
-    
-}
-void work1_cb_after(uv_work_t *req, int status)
-{
-    printf("work1cbafter\n");
-}
+hashset_t mid_set;
 
 int main(int argc, char ** argv)
 {
-    list(int *, ll);
-    int t = 5;
-    printf("t ->%p\n", &t);
-    list_push(ll, &t);
-    list_each_elem(ll, e)
-    {
-        printf("e->%p %d\n", *e, **e);
-    }
     struct db_backend db;
     db_backend_init("/Users/wyl/git-workspace/CourtCrawlCore/test.db3", &db);
     struct task task;
@@ -112,13 +85,24 @@ int main(int argc, char ** argv)
     r = hashmap_get(m, a, (void **)(&c));
     if (MAP_OK == r)
     {
-        printf("fuck");
+        printf("fuck %p %p\n",a , c);
     }
     else
     {
-        printf("shit");
+        printf("shit\n");
     }
-    printf("test->%s", c);
+    printf("test->%s\n", c);
+    char k[128] = {0};
+    sprintf(k, "hello");
+    r = hashmap_get(m, k, (void **)(&c));
+    if (MAP_OK == r)
+    {
+        printf("fuck %p %p\n",k , c);
+    }
+    else
+    {
+        printf("key shit\n");
+    }
    // hashmap_iterate(m, pfan, NULL);
     
     /*
@@ -209,13 +193,23 @@ int main(int argc, char ** argv)
     return 0;*/
     loop = uv_default_loop();
     
-    struct assistants_container container;
-    r = assistants_container_init(&container, loop, &db);
-    get_assistant_instance(&container, "fuck");
     
-    uv_work_t work;
-    work.data = loop;
-    uv_queue_work(loop, &work, work1_cb, work1_cb_after);
+    r = assistants_container_init(&container, loop, &db);
+    get_assistant_instance(&container, "mid->2");
+    
+    mid_set = hashset_create();
+    if (!mid_set)
+    {
+        printf("failed create hashset instance...\n");
+        return -1;
+    }
+    char key[64] = {0};
+    sprintf(key, "mid->%d", 2);
+    hashset_add(mid_set, key);
+    if(hashset_is_member(mid_set, "mid->2"))
+    {
+        printf("草\n");
+    }
     
     struct server s;
     server_init(&s, "test---------", TCP_SERVER, loop, "127.0.0.1", 9001);

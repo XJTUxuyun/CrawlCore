@@ -14,6 +14,11 @@
 #include <uv.h>
 #include "cJSON.h"
 #include "version.h"
+#include "assistant.h"
+
+extern struct assistants_container container;  // defined in main.c
+
+extern hashset_t mid_set;  // restrict vicious mid
 
 /**
  * process one request
