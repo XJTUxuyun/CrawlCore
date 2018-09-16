@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <uv.h>
 #include "cJSON.h"
+#include "version.h"
 
 /**
  * process one request

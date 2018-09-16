@@ -83,26 +83,27 @@ int assistant_destory(struct assistant *assistant)
     list_each_elem(assistant->task_running_list, task)
     {
         list_elem_remove(task);
-        hashmap_remove(assistant->tasks_running_map, task->uuid);
-        db_backend_put(assistant->db_backend, task);
-        task_destory(task);
+        hashmap_remove(assistant->tasks_running_map, (*task)->uuid);
+        db_backend_put(assistant->db_backend, *task);
+        task_destory(*task);
     }
     list_each_elem(assistant->task_ready_list, task)
     {
         list_elem_remove(task);
-        hashmap_remove(assistant->tasks_ready_map, task->uuid);
+        hashmap_remove(assistant->tasks_ready_map, (*task)->uuid);
         // put back into db
-        db_backend_put(assistant->db_backend, task);
-        task_destory(task);
+        db_backend_put(assistant->db_backend, *task);
+        task_destory(*task);
     }
     list_each_elem(assistant->task_done_list, task)
     {
         list_elem_remove(task);
         // put back into db
-        db_backend_put(assistant->db_backend, task);
-        task_destory(task);
+        db_backend_put(assistant->db_backend, *task);
+        task_destory(*task);
     }
     uv_mutex_unlock(&assistant->mutex);
+    free(assistant);
     return 0;
 }
 
@@ -113,17 +114,16 @@ void assistant_inspector(struct assistant *assistant)
     assistant->tick ++;
     list_each_elem(assistant->task_running_list, task)
     {
-        struct task *t = task;
-        if (t->tick > TASK_MAX_TICK)
+        if ((*task)->tick > TASK_MAX_TICK)
         {
             list_elem_remove(task);
-            hashmap_remove(assistant->tasks_running_map, t->uuid);
+            hashmap_remove(assistant->tasks_running_map, (*task)->uuid);
             list_push(assistant->task_ready_list, *task);
-            hashmap_put(assistant->tasks_ready_map, t->uuid, t);
+            hashmap_put(assistant->tasks_ready_map, (*task)->uuid, *task);
         }
         else
         {
-            t->tick ++;
+            (*task)->tick ++;
         }
     }
     uv_mutex_unlock(&assistant->mutex);
@@ -136,17 +136,17 @@ void assistant_container_inspector_cb(uv_work_t *req)
     uv_mutex_lock(&container->mutex);
     list_each_elem(container->assistants_list, assistant)
     {
-        if (assistant->tick > ASSISTANT_MAX_TICK)
+        if ((*assistant)->tick > ASSISTANT_MAX_TICK)
         {
             list_elem_remove (assistant);
-            hashmap_remove(container->assistants_map, assistant->key);
+            hashmap_remove(container->assistants_map, (*assistant)->key);
             // recyle assistant
-            assistant_destory(assistant);
+            assistant_destory(*assistant);
         }
         else
         {
             // warning, user should not queue uv_work in an uv_work callback.
-            assistant_inspector(assistant);
+            assistant_inspector(*assistant);
         }
     }
     uv_mutex_unlock(&container->mutex);
@@ -204,7 +204,7 @@ struct assistant *get_assistant_instance(struct assistants_container *container,
             printf("put new assistant into container's hashmap error...\n");
             return NULL;
         }
-        list_push(container->assistants_list, *assistant);
+        list_push(container->assistants_list, assistant);
     }
     assistant->tick = 0;
     uv_mutex_unlock(&container->mutex);
@@ -274,9 +274,9 @@ int assistants_container_destory(struct assistants_container *container)
     list_each_elem(container->assistants_list, assistant)  // destory all assistant
     {
         list_elem_remove (assistant);
-        hashmap_remove(container->assistants_map, assistant->key);
+        hashmap_remove(container->assistants_map, (*assistant)->key);
         // recyle assistant
-        assistant_destory(assistant);
+        assistant_destory(*assistant);
     }
     hashmap_free(container->assistants_map);  // free hashmap
     uv_mutex_unlock(&container->mutex);

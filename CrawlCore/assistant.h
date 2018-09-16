@@ -22,6 +22,13 @@
 #define TASK_MAX_TICK 2
 #define ASSISTANT_MAX_TICK 3
 
+enum TASK_STATUS
+{
+    TASK_DONE=0,  // task is done
+    TASK_RUNING,  // task is running
+    TASK_READY  // task is ready for running
+};
+
 /**
  * one crawl task
  */
@@ -51,10 +58,10 @@ struct assistant
     long serve_times;
     long tick;
     map_t tasks_ready_map;
-    list(struct task, task_ready_list);
+    list(struct task *, task_ready_list);
     map_t tasks_running_map;
-    list(struct task, task_running_list);
-    list(struct task, task_done_list);
+    list(struct task *, task_running_list);
+    list(struct task *, task_done_list);
     struct db_backend *db_backend;
 };
 
@@ -67,7 +74,7 @@ struct assistants_container
     uv_mutex_t mutex;
     uv_timer_t inspector;
     map_t assistants_map;  // named assistant, use key to find the assistant.
-    list(struct assistant, assistants_list);
+    list(struct assistant *, assistants_list);
     struct db_backend *db_backend;
 };
 

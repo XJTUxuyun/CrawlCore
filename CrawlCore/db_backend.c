@@ -118,12 +118,14 @@ int db_backend_puts(struct db_backend *db_backend, list(struct task, task))
     return 0;
 }
 
-int db_backend_get(struct db_backend *db_backend, struct task *task)
+int db_backend_get(struct db_backend *db_backend, int mid, struct task *task)
 {
     int r;
     sqlite3_stmt *stmt;
-    char *sql = "select * from test";
-    while( (r = sqlite3_prepare_v2(db_backend->db, sql, -1, &stmt, NULL)) != SQLITE_OK);
+    char tmp[128] = {0};
+    char *sql = "select * from test where mid = %d and status = 2";
+    sprintf(tmp, sql, mid);
+    while( (r = sqlite3_prepare_v2(db_backend->db, tmp, -1, &stmt, NULL)) != SQLITE_OK);
     if (SQLITE_OK != r)
     {
         printf("db_backend_get error->%s\n", sqlite3_errmsg(db_backend->db));
@@ -143,6 +145,7 @@ int db_backend_get(struct db_backend *db_backend, struct task *task)
     task->len = len;
     task->data = malloc(sizeof(len));
     memcpy(task->data, data, len);
+    
     sqlite3_finalize(stmt);
     return 0;
 }

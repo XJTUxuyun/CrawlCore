@@ -55,6 +55,14 @@ void work1_cb_after(uv_work_t *req, int status)
 
 int main(int argc, char ** argv)
 {
+    list(int *, ll);
+    int t = 5;
+    printf("t ->%p\n", &t);
+    list_push(ll, &t);
+    list_each_elem(ll, e)
+    {
+        printf("e->%p %d\n", *e, **e);
+    }
     struct db_backend db;
     db_backend_init("/Users/wyl/git-workspace/CourtCrawlCore/test.db3", &db);
     struct task task;
@@ -67,8 +75,10 @@ int main(int argc, char ** argv)
     struct task task1;
     task_init(&task1, NULL);
     
-    db_backend_get(&db, &task1);
+    //db_backend_get(&db, 10, &task1);
     printf("task1->uuid-> %s  data->%s\n", task1.uuid, task1.data);
+    //db_backend_get(&db, 10, &task1);
+    //printf("task1->uuid-> %s  data->%s\n", task1.uuid, task1.data);
     int r;
     r = log4c_init();
     assert(0 == r);
