@@ -64,16 +64,7 @@ void server_tcp_accept_connection(uv_stream_t *tcp,
         free(tcp_incoming);
         return;
     }
-    tcp_incoming->data = malloc(sizeof(void **) * 2);
-    assert(NULL != tcp_incoming->data);
-    if (NULL == tcp_incoming->data)
-    {
-        printf("malloc tcp_incoming data error...\n");
-        free(tcp_incoming);
-        return;
-    }
-    ((void **)(tcp_incoming->data))[0] = tcp->data;
-    ((void **)(tcp_incoming->data))[1] = tcp_incoming;  // trace ptr to avoid leak.
+    tcp_incoming->data = tcp->data;
     //uv_tcp_keepalive(tcp_incoming, 1, 3);
     r = uv_read_start((uv_stream_t *)tcp_incoming, alloc_cb, server_tcp_read_cb);
     assert(0 == r);
@@ -81,7 +72,6 @@ void server_tcp_accept_connection(uv_stream_t *tcp,
     {
         printf("server start read remote client error...\n");
         uv_close((uv_handle_t *)tcp_incoming, NULL);
-        free(tcp_incoming->data);
         free(tcp_incoming);
     }
     return;  // everything is ok.
@@ -148,14 +138,10 @@ void server_tcp_work_after_cb(uv_work_t *req,
 
 void tcp_connection_close_cb(uv_handle_t *tcp_connection)
 {
-    if (tcp_connection->data)
+    uv_tcp_t *t = (uv_tcp_t *)tcp_connection;
+    if (t)
     {
-        uv_tcp_t * t = ((void **)(tcp_connection->data))[1];
-        if (t)
-        {
-            free(t);
-        }
-        free(tcp_connection->data);
+        free(t);
     }
 }
 
@@ -166,13 +152,13 @@ void server_tcp_read_cb(uv_stream_t* handle,
     int r;
     if (nread < 0)  // tcp read error, maybe close
     {
-        uv_close(((void **)(handle->data))[1], tcp_connection_close_cb);
+        uv_close(handle, tcp_connection_close_cb);
         return;
     }
     
     if (nread == 0) // read nothing or shutdown by peer client
     {
-        uv_close(((void **)(handle->data))[1], tcp_connection_close_cb);
+        uv_close(handle, tcp_connection_close_cb);
         return;
     }
     
@@ -199,6 +185,8 @@ void server_tcp_read_cb(uv_stream_t* handle,
         return;
     }
     memcpy(req->data, handle->data, sizeof(void **) * 2);
+    ((void **)req->data)[0] = handle->data;
+    ((void **)req->data)[1] = handle;
     *((uv_buf_t *)((char *)req->data + sizeof(void **) * 2)) = *buf;
     *((ssize_t *)((char *)req->data + sizeof(void **) * 2 + sizeof(uv_buf_t))) = nread;
     *((struct sockaddr *)((char *)req->data + sizeof(void **) * 2 + sizeof(uv_buf_t) + sizeof(ssize_t))) = addr;
