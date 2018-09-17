@@ -7,12 +7,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#define INITIAL_SIZE (256)
+#define INITIAL_SIZE (1024)
 #define MAX_CHAIN_LENGTH (8)
+#define MAX_KEY_LENGTH (64)
 
 /* We need to keep keys and values */
 typedef struct _hashmap_element{
-	char* key;
+	char key[MAX_KEY_LENGTH];
 	int in_use;
 	any_t data;
 } hashmap_element;
@@ -165,8 +166,12 @@ unsigned long crc32(const unsigned char *s, unsigned long len)
  * Hashing function for a string
  */
 unsigned int hashmap_hash_int(hashmap_map * m, char* keystring){
-
-    unsigned long key = crc32((unsigned char*)(keystring), strlen(keystring));
+    ssize_t str_len = strlen(keystring);
+    if (str_len > MAX_KEY_LENGTH)
+    {
+        str_len = MAX_KEY_LENGTH;
+    }
+    unsigned long key = crc32((unsigned char*)(keystring), str_len);
 
 	/* Robert Jenkins' 32 bit Mix Function */
 	key += (key << 12);
@@ -180,7 +185,6 @@ unsigned int hashmap_hash_int(hashmap_map * m, char* keystring){
 
 	/* Knuth's Multiplicative Method */
 	key = (key >> 3) * 2654435761;
-
 	return key % m->table_size;
 }
 
@@ -200,13 +204,12 @@ int hashmap_hash(map_t in, char* key){
 
 	/* Find the best index */
 	curr = hashmap_hash_int(m, key);
-
 	/* Linear probing */
 	for(i = 0; i< MAX_CHAIN_LENGTH; i++){
 		if(m->data[curr].in_use == 0)
 			return curr;
 
-		if(m->data[curr].in_use == 1 && (strcmp(m->data[curr].key,key)==0))
+		if(m->data[curr].in_use == 1 && (strncmp(m->data[curr].key,key, MAX_KEY_LENGTH)==0))
 			return curr;
 
 		curr = (curr + 1) % m->table_size;
@@ -276,7 +279,12 @@ int hashmap_put(map_t in, char* key, any_t value){
 
 	/* Set the data */
 	m->data[index].data = value;
-	m->data[index].key = key;
+	// m->data[index].key = key;
+    ssize_t str_len = strlen(key);
+    if(str_len > MAX_KEY_LENGTH){
+        str_len = MAX_KEY_LENGTH;
+    }
+    strncpy(m->data[index].key, key, str_len);
 	m->data[index].in_use = 1;
 	m->size++; 
 
@@ -368,7 +376,8 @@ int hashmap_remove(map_t in, char* key){
                 /* Blank out the fields */
                 m->data[curr].in_use = 0;
                 m->data[curr].data = NULL;
-                m->data[curr].key = NULL;
+                // m->data[curr].key = NULL;
+                memset(m->data[curr].key, 0, MAX_KEY_LENGTH);
 
                 /* Reduce the size */
                 m->size--;

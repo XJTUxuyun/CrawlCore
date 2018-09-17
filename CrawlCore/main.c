@@ -23,13 +23,6 @@
 static uv_loop_t * loop = NULL;
 //Config config;  // 全局配置
 
-
-int pfan(any_t item, any_t data)
-{
-    printf("get value->%d\n",*(char *)data);
-    return MAP_OK;
-}
-
 struct assistants_container container;
 
 map_t mid_set;
@@ -73,39 +66,7 @@ int main(int argc, char ** argv)
     printf("version %s\n", version_string());
     
     
-    map_t m = hashmap_new();
-    char *a = "hello";
-    char *b = "fuck";
- 
-    r = hashmap_put(m, a, b);
-    char *c;
-    r = hashmap_get(m, a, (void **)(&c));
-    if (MAP_OK == r)
-    {
-        printf("fuck %p %p\n",a , c);
-    }
-    else
-    {
-        printf("shit\n");
-    }
-    printf("test->%s\n", c);
     
-    for (int i=0;i<0;i++)
-    {
-        char *k = malloc(sizeof(128));
-        sprintf(k, "hello");
-        r = hashmap_get(m, k, (void **)(&c));
-        if (MAP_OK == r)
-        {
-            printf("fuck %d\n", i);
-        }
-        else
-        {
-            printf("key shit\n");
-        }
-        free(k);
-    }
-   // hashmap_iterate(m, pfan, NULL);
     
     /*
     int r;
@@ -197,16 +158,9 @@ int main(int argc, char ** argv)
     
     
     r = assistants_container_init(&container, loop, &db);
-    get_assistant_instance(&container, "mid->2");
+    //get_assistant_instance(&container, "mid->2");
     
-    mid_set = hashmap_new();
-    if (!mid_set)
-    {
-        printf("create mid_set error...\n");
-        return 0;
-    }
     
-    hashmap_put(mid_set, "mid->2", &reserve);
     
     struct server s;
     server_init(&s, "test---------", TCP_SERVER, loop, "127.0.0.1", 9001);

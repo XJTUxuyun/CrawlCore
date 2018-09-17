@@ -126,9 +126,9 @@ void server_tcp_work_cb(uv_work_t *req)
     
     *(uv_buf_t *)((char *)write->data + sizeof(void **)) = buf1;
     uv_write(write, (uv_stream_t *)tcp_incoming, &buf1, 1, server_tcp_write_cb);
-    printf("fuck port------>%d\n", port);
-    printf("work_cb ->%p\n", tcp_incoming);
-    printf("%lu, %s %s\n", nread, buf.base, server->name);
+    // printf("fuck port------>%d\n", port);
+    // printf("work_cb ->%p\n", tcp_incoming);
+    // printf("%lu, %s %s\n", nread, buf.base, server->name);
 }
 
 void server_tcp_work_after_cb(uv_work_t *req,

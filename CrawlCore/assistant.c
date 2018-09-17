@@ -133,13 +133,18 @@ void assistant_container_inspector_cb(uv_work_t *req)
 {
     struct assistants_container *container = req->data;
     uv_mutex_lock(&container->mutex);
-    printf("assistant container inspector...\n");
+    size_t list_length = list_length(container->assistants_list);
+    int map_length = hashmap_length(container->assistants_map);
+    printf("assistant container inspector, map size->%d | list size->%zu ...\n", map_length, list_length);
     list_each_elem(container->assistants_list, assistant)
     {
         if ((*assistant)->tick > ASSISTANT_MAX_TICK)
         {
             list_elem_remove (assistant);
-            hashmap_remove(container->assistants_map, (*assistant)->key);
+            if (MAP_OK != hashmap_remove(container->assistants_map, (*assistant)->key))
+            {
+                printf("remove dead assistant from container error, assitant->%s | %p...\n", (*assistant)->key, *assistant);
+            }
             // recyle assistant
             assistant_destory(*assistant);
         }
