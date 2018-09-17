@@ -65,8 +65,6 @@ uv_buf_t process_request(uv_buf_t *request,ssize_t nread)
     }
     char key[64] = {0};
     snprintf(key, 64,"mid->%d", mid->valueint);
-    printf("key -> %s\n", key);
-    
     
     
     cJSON *type = cJSON_GetObjectItem(req, "type");

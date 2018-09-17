@@ -16,9 +16,9 @@
 #include <time.h>
 #include "server.h"
 #include "hashmap.h"
-#include "hashset.h"
 #include <stdlib.h>
 #include "db_backend.h"
+#include "hashmap.h"
 
 static uv_loop_t * loop = NULL;
 //Config config;  // 全局配置
@@ -32,7 +32,9 @@ int pfan(any_t item, any_t data)
 
 struct assistants_container container;
 
-hashset_t mid_set;
+map_t mid_set;
+
+int reserve = 0;
 
 int main(int argc, char ** argv)
 {
@@ -76,11 +78,6 @@ int main(int argc, char ** argv)
     char *b = "fuck";
  
     r = hashmap_put(m, a, b);
-    assert(MAP_OK == r);
-    if (r != MAP_OK)
-    {
-        printf("map put error...\n");
-    }
     char *c;
     r = hashmap_get(m, a, (void **)(&c));
     if (MAP_OK == r)
@@ -92,16 +89,21 @@ int main(int argc, char ** argv)
         printf("shit\n");
     }
     printf("test->%s\n", c);
-    char k[128] = {0};
-    sprintf(k, "hello");
-    r = hashmap_get(m, k, (void **)(&c));
-    if (MAP_OK == r)
+    
+    for (int i=0;i<0;i++)
     {
-        printf("fuck %p %p\n",k , c);
-    }
-    else
-    {
-        printf("key shit\n");
+        char *k = malloc(sizeof(128));
+        sprintf(k, "hello");
+        r = hashmap_get(m, k, (void **)(&c));
+        if (MAP_OK == r)
+        {
+            printf("fuck %d\n", i);
+        }
+        else
+        {
+            printf("key shit\n");
+        }
+        free(k);
     }
    // hashmap_iterate(m, pfan, NULL);
     
@@ -197,19 +199,14 @@ int main(int argc, char ** argv)
     r = assistants_container_init(&container, loop, &db);
     get_assistant_instance(&container, "mid->2");
     
-    mid_set = hashset_create();
+    mid_set = hashmap_new();
     if (!mid_set)
     {
-        printf("failed create hashset instance...\n");
-        return -1;
+        printf("create mid_set error...\n");
+        return 0;
     }
-    char key[64] = {0};
-    sprintf(key, "mid->%d", 2);
-    hashset_add(mid_set, key);
-    if(hashset_is_member(mid_set, "mid->2"))
-    {
-        printf("草\n");
-    }
+    
+    hashmap_put(mid_set, "mid->2", &reserve);
     
     struct server s;
     server_init(&s, "test---------", TCP_SERVER, loop, "127.0.0.1", 9001);

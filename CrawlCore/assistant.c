@@ -109,8 +109,8 @@ int assistant_destory(struct assistant *assistant)
 
 void assistant_inspector(struct assistant *assistant)
 {
-    printf("assistant inspector, key->\"%s\" p->%p\n", assistant->key, assistant);
     uv_mutex_lock(&assistant->mutex);
+    printf("assistant inspector, key->\"%s\" p->%p\n", assistant->key, assistant);
     assistant->tick ++;
     list_each_elem(assistant->task_running_list, task)
     {
@@ -132,8 +132,8 @@ void assistant_inspector(struct assistant *assistant)
 void assistant_container_inspector_cb(uv_work_t *req)
 {
     struct assistants_container *container = req->data;
-    printf("assistant container inspector...\n");
     uv_mutex_lock(&container->mutex);
+    printf("assistant container inspector...\n");
     list_each_elem(container->assistants_list, assistant)
     {
         if ((*assistant)->tick > ASSISTANT_MAX_TICK)
@@ -181,11 +181,11 @@ void assistant_container_inspector_timer_cb(uv_timer_t *handle)
 
 struct assistant *get_assistant_instance(struct assistants_container *container, char *key)
 {
+    uv_mutex_lock(&container->mutex);
     int r;
     struct assistant *assistant;
-    uv_mutex_lock(&container->mutex);
     r = hashmap_get(container->assistants_map, key, (void **)(&assistant));
-    if (MAP_OK != r)
+    if (MAP_MISSING == r)
     {
         printf("assistant is not in assistant_map, create one...\n");
         assistant = malloc(sizeof(struct assistant));

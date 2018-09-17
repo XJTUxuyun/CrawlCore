@@ -111,10 +111,7 @@ int db_backend_puts(struct db_backend *db_backend, list(struct task, task))
     int r;
     char *err_msg;
     sqlite3_stmt *stmt;
-    list_each_elem(task, t)
-    {
-        
-    }
+    
     return 0;
 }
 

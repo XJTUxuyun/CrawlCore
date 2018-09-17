@@ -18,7 +18,7 @@
 
 extern struct assistants_container container;  // defined in main.c
 
-extern hashset_t mid_set;  // restrict vicious mid
+extern map_t mid_set;
 
 /**
  * process one request

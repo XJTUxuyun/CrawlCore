@@ -16,7 +16,6 @@
 #include "hashmap.h"
 #include "list.h"
 #include "uuid4.h"
-#include "hashset.h"
 #include "db_backend.h"
 
 #define TASK_MAX_TICK 2
