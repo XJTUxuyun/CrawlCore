@@ -25,7 +25,7 @@ enum TASK_STATUS
 {
     TASK_DONE=0,  // task is done
     TASK_RUNING,  // task is running
-    TASK_READY  // task is ready for running
+    TASK_READY    // task is ready for running
 };
 
 /**
@@ -35,7 +35,7 @@ struct task
 {
     unsigned char uuid[UUID4_LEN];  // unique id;
     int mid;        // distinguish a task.
-    int status;    // 0 for unsuccess and other success.
+    int status;     // 0 for unsuccess and other success.
     time_t ctime;   // create time.
     time_t mtime;   // modify time.
     int retry;      // retry times.
@@ -57,9 +57,8 @@ struct assistant
     long serve_times;
     long tick;
     map_t tasks_ready_map;
-    list(struct task *, task_ready_list);
     map_t tasks_running_map;
-    list(struct task *, task_running_list);
+    list(struct task *, task_ready_list);
     list(struct task *, task_done_list);
     struct db_backend *db_backend;
 };
@@ -96,6 +95,29 @@ int task_destory(struct task *task);
  * @param db_backend database backend
  */
 int assistant_init(struct assistant *assistant, char *key, struct db_backend *db_backend);
+
+/**
+ * post task into assistant
+ * @param assistant object assistant
+ * @param task object task
+ */
+int assistant_post(struct assistant *assistant, struct task *task);
+
+/*
+ * ack one task
+ * @param assistant object assistant
+ * @param key task key
+ * @param status ack status
+ */
+int assistant_ack(struct assistant *assistant, char *key, int status);
+
+/*
+ * get one task
+ * @param assistant object assistant
+ * @param mid request mid
+ * @return task
+ */
+struct task *assistant_get(struct assistant *assistant, int mid);
 
 /**
  * destory assistant

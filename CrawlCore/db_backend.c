@@ -14,7 +14,8 @@ int db_backend_init(char *db_path, struct db_backend *db_backend)
     int r;
     char *err_msg;
     memset(db_backend, 0 , sizeof(struct db_backend));
-    r = sqlite3_open_v2(db_path, &db_backend->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
+    //r = sqlite3_open_v2(db_path, &db_backend->db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_FULLMUTEX, NULL);
+    r = sqlite3_open(db_path, &db_backend->db);
     if (SQLITE_OK != r)
     {
         printf("open->%s error, %s\n", db_path, sqlite3_errmsg(db_backend->db));
@@ -26,6 +27,14 @@ int db_backend_init(char *db_path, struct db_backend *db_backend)
     {
         printf("create table error, %s.\n", err_msg);
         sqlite3_free(err_msg);
+        return -1;
+    }
+    db_backend->mutex = sqlite3_mutex_alloc(SQLITE_MUTEX_RECURSIVE);
+    if (!db_backend->mutex)
+    {
+        printf("alloc sqlite mutex error...\n");
+        sqlite3_close(db_backend->db);
+        sqlite3_mutex_free(db_backend->mutex);
         return -1;
     }
     return 0;
@@ -43,6 +52,7 @@ int db_backend_put(struct db_backend *db_backend, struct task *task)
     char *err_msg;
     sqlite3_stmt *stmt;
     char *sql = "insert or replace into test(uuid, mid, status, ctime, mtime, retry, data) values(?, ?, ?, ?, ?, ?, ?)";
+    sqlite3_mutex_enter(db_backend->mutex);
     while( (r = sqlite3_prepare_v2(db_backend->db, sql, -1, &stmt, NULL)) != SQLITE_OK);
     if (SQLITE_OK != r)
     {
@@ -90,14 +100,17 @@ int db_backend_put(struct db_backend *db_backend, struct task *task)
         goto step_err;
     }
     sqlite3_finalize(stmt);
+    sqlite3_mutex_leave(db_backend->mutex);
     return 0;
 bind_err:
     printf("db_backend_put bind error->%s\n", sqlite3_errmsg(db_backend->db));
     sqlite3_finalize(stmt);
+    sqlite3_mutex_leave(db_backend->mutex);
     return -1;
 step_err:
     printf("error2->%s\n", sqlite3_errmsg(db_backend->db));
     sqlite3_finalize(stmt);
+    sqlite3_mutex_leave(db_backend->mutex);
     return -1;
 }
 
@@ -120,8 +133,9 @@ int db_backend_get(struct db_backend *db_backend, int mid, struct task *task)
     int r;
     sqlite3_stmt *stmt;
     char tmp[128] = {0};
-    char *sql = "select * from test where mid = %d and status = 2";
+    char *sql = "select * from test where mid = %d and status = 1";  // status 0 represent ok. status 1 represent need crawl and 2 represent crawling
     sprintf(tmp, sql, mid);
+    sqlite3_mutex_enter(db_backend->mutex);
     while( (r = sqlite3_prepare_v2(db_backend->db, tmp, -1, &stmt, NULL)) != SQLITE_OK);
     if (SQLITE_OK != r)
     {
@@ -129,20 +143,31 @@ int db_backend_get(struct db_backend *db_backend, int mid, struct task *task)
         sqlite3_finalize(stmt);
         return -1;
     }
-    while (SQLITE_ROW != (r = sqlite3_step(stmt)));
-    const unsigned char *uuid = sqlite3_column_text(stmt, 0);
-    strcpy(task->uuid, uuid);
-    task->mid = sqlite3_column_int(stmt, 1);
-    task->status = sqlite3_column_int(stmt, 2);
-    task->ctime = sqlite3_column_int64(stmt, 3);
-    task->mtime = sqlite3_column_int64(stmt, 4);
-    task->retry = sqlite3_column_int(stmt, 5);
-    const unsigned char *data = sqlite3_column_text(stmt, 6);
-    int len = sqlite3_column_bytes(stmt, 6);
-    task->len = len;
-    task->data = malloc(sizeof(len));
-    memcpy(task->data, data, len);
+    r = sqlite3_step(stmt);
+    if (SQLITE_ROW == r)
+    {
+        const unsigned char *uuid = sqlite3_column_text(stmt, 0);
+        strcpy(task->uuid, uuid);
+        task->mid = sqlite3_column_int(stmt, 1);
+        task->status = sqlite3_column_int(stmt, 2);
+        task->ctime = sqlite3_column_int64(stmt, 3);
+        task->mtime = sqlite3_column_int64(stmt, 4);
+        task->retry = sqlite3_column_int(stmt, 5);
+        const unsigned char *data = sqlite3_column_text(stmt, 6);
+        int len = sqlite3_column_bytes(stmt, 6);
+        task->len = len;
+        task->data = malloc(sizeof(len));
+        memcpy(task->data, data, len);
+        
+        struct task *tmp = malloc(sizeof(struct task));
+        memset(tmp, 0, sizeof(struct task));
+        memcpy(tmp, task, sizeof(struct task));
+        tmp->status = 2;
+        
+        db_backend_put(db_backend, tmp);
+    }
     
     sqlite3_finalize(stmt);
+    sqlite3_mutex_leave(db_backend->mutex);
     return 0;
 }

@@ -75,36 +75,139 @@ int assistant_init(struct assistant *assistant, char *key, struct db_backend *db
     return 0;
 }
 
+int assistant_post(struct assistant *assistant, struct task *task)
+{
+    int r = 0;
+    uv_mutex_lock(&assistant->mutex);
+    if (MAP_MISSING != hashmap_key_exist(assistant->tasks_ready_map, task->uuid))
+    {
+        printf("post task uuid exists...\n");
+        r = -1;
+    }
+    else
+    {
+        // insert task
+        if (MAP_OK == hashmap_put(assistant->tasks_ready_map, task->uuid, task))
+        {
+            list_push(assistant->task_ready_list, task);
+        }
+        else
+        {
+            r = -2;
+        }
+    }
+    uv_mutex_unlock(&assistant->mutex);
+    return r;
+}
+
+int assistant_ack(struct assistant *assistant, char *key, int status)
+{
+    int r = 0;
+    uv_mutex_lock(&assistant->mutex);
+    struct task *task;
+    r = hashmap_get(assistant->tasks_running_map, key, &task);
+    hashmap_remove(assistant, key);  // if key unexist, no error occur.
+    if (r == MAP_OK)
+    {
+        if (0 == status)
+        {
+            list_push(assistant->task_done_list, task);
+        }
+        else
+        {
+            list_push(assistant->task_ready_list, task);
+            hashmap_put(assistant->tasks_ready_map, task->uuid, task);
+        }
+    }
+    uv_mutex_unlock(&assistant->mutex);
+    return r;
+}
+
+struct task *assistant_get(struct assistant *assistant, int mid)
+{
+    struct task *task;
+    uv_mutex_lock(&assistant->mutex);
+    if (list_length(assistant->task_ready_list))
+    {
+        printf("get task from task_ready_list...\n");
+        task = *list_elem_front(assistant->task_ready_list);
+    }
+    else
+    {
+        printf("get task from db...\n");
+        // list is empty
+        task = malloc(sizeof(struct task));
+        task_init(task, NULL);
+        int r = db_backend_get(assistant->db_backend, mid, task);
+        if (r)
+        {
+            free(task);
+            task = NULL;
+        }
+    }
+    // move task to running map
+    if (NULL != task)
+    {
+        hashmap_put(assistant->tasks_running_map, task->uuid, task);
+    }
+    uv_mutex_unlock(&assistant->mutex);
+    return task;
+}
+
+int task_running_list_destory_cb(any_t item, any_t data)
+{
+    struct task *task = (struct task *)data;
+    struct assistant *assistant = (struct assistant *)item;
+    hashmap_remove(assistant->tasks_running_map, task->uuid);
+    db_backend_put(assistant->db_backend, task);
+    task_destory(task);
+    return MAP_OK;
+}
+
 int assistant_destory(struct assistant *assistant)
 {
     // remember free memory
     uv_mutex_lock(&assistant->mutex);
     printf("recycle...\n");
-    list_each_elem(assistant->task_running_list, task)
-    {
-        list_elem_remove(task);
-        hashmap_remove(assistant->tasks_running_map, (*task)->uuid);
-        db_backend_put(assistant->db_backend, *task);
-        task_destory(*task);
-    }
+    hashmap_iterate(assistant->tasks_running_map, task_running_list_destory_cb, assistant);
     list_each_elem(assistant->task_ready_list, task)
     {
-        list_elem_remove(task);
         hashmap_remove(assistant->tasks_ready_map, (*task)->uuid);
         // put back into db
         db_backend_put(assistant->db_backend, *task);
         task_destory(*task);
+        list_elem_remove(task);
     }
     list_each_elem(assistant->task_done_list, task)
     {
-        list_elem_remove(task);
         // put back into db
         db_backend_put(assistant->db_backend, *task);
         task_destory(*task);
+        list_elem_remove(task);
     }
     uv_mutex_unlock(&assistant->mutex);
-    free(assistant);
+    if (assistant)
+    {
+        free(assistant);
+    }
     return 0;
+}
+
+int tasks_running_map_inspector_cb(any_t item, any_t data)
+{
+    struct task *task = (struct task *)data;
+    struct assistant *assistant = (struct assistant *)item;
+    if (task->tick > TASK_MAX_TICK)
+    {
+        hashmap_remove(assistant->tasks_running_map, task->uuid);
+        list_push(assistant->task_ready_list, task);
+        hashmap_put(assistant->tasks_ready_map, task->uuid, task);
+    }
+    else
+    {
+        task->tick ++;
+    }
+    return MAP_OK;
 }
 
 void assistant_inspector(struct assistant *assistant)
@@ -112,20 +215,7 @@ void assistant_inspector(struct assistant *assistant)
     uv_mutex_lock(&assistant->mutex);
     printf("assistant inspector, key->\"%s\" p->%p\n", assistant->key, assistant);
     assistant->tick ++;
-    list_each_elem(assistant->task_running_list, task)
-    {
-        if ((*task)->tick > TASK_MAX_TICK)
-        {
-            list_elem_remove(task);
-            hashmap_remove(assistant->tasks_running_map, (*task)->uuid);
-            list_push(assistant->task_ready_list, *task);
-            hashmap_put(assistant->tasks_ready_map, (*task)->uuid, *task);
-        }
-        else
-        {
-            (*task)->tick ++;
-        }
-    }
+    hashmap_iterate(assistant->tasks_running_map, tasks_running_map_inspector_cb, assistant);
     uv_mutex_unlock(&assistant->mutex);
 }
 
@@ -140,13 +230,13 @@ void assistant_container_inspector_cb(uv_work_t *req)
     {
         if ((*assistant)->tick > ASSISTANT_MAX_TICK)
         {
-            list_elem_remove (assistant);
             if (MAP_OK != hashmap_remove(container->assistants_map, (*assistant)->key))
             {
                 printf("remove dead assistant from container error, assitant->%s | %p...\n", (*assistant)->key, *assistant);
             }
             // recyle assistant
             assistant_destory(*assistant);
+            list_elem_remove (assistant);
         }
         else
         {
@@ -280,10 +370,10 @@ int assistants_container_destory(struct assistants_container *container)
     uv_timer_stop(&container->inspector);  // stop timer
     list_each_elem(container->assistants_list, assistant)  // destory all assistant
     {
-        list_elem_remove (assistant);
         hashmap_remove(container->assistants_map, (*assistant)->key);
         // recyle assistant
         assistant_destory(*assistant);
+        list_elem_remove (assistant);
     }
     hashmap_free(container->assistants_map);  // free hashmap
     uv_mutex_unlock(&container->mutex);

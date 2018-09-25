@@ -16,6 +16,7 @@
 struct db_backend
 {
     sqlite3 *db;
+    sqlite3_mutex *mutex;
 };
 
 int db_backend_init(char *db_path, struct db_backend *db_backend);

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <uv.h>
+#include "cJSON.h"
 
 /**
  * when connected socket can read, alloc sufficient memory to save data
@@ -24,5 +25,13 @@
 void alloc_cb(uv_handle_t *handle,
               size_t suggested_size,
               uv_buf_t *buf);
+
+/*
+ * render cJSON object to uv_buf_t for transfer
+ * not maintain object memeory
+ * @param object which to render
+ * @return uv_buf_t
+ */
+uv_buf_t json2uv_buf_t(cJSON *object);
 
 #endif /* tools_h */

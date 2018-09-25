@@ -8,14 +8,6 @@
 
 #include "tools.h"
 
-/**
- * when connected socket can read, alloc sufficient memory to save data
- * suggested_size if 64k, we donot need such large memeory
- * now 1k is enough
- * @param handle triggered handle
- * @param suggested_size suggested_size is pass from xxx function, default 64K
- * @param buf buf->base which need alloc
- */
 void alloc_cb(uv_handle_t *handle,
               size_t suggested_size,
               uv_buf_t *buf)
@@ -24,4 +16,18 @@ void alloc_cb(uv_handle_t *handle,
     buf->base = (char *)malloc(suggested_size);
     memset(buf->base, 0, suggested_size);
     buf->len = suggested_size;
+}
+
+uv_buf_t json2uv_buf_t(cJSON *object)
+{
+    uv_buf_t buf = {NULL, 0};
+    char *t = cJSON_PrintUnformatted(object);
+    buf.len = strlen(t);
+    buf.base = malloc(buf.len + 1);
+    strcpy(buf.base, t);
+    if (NULL != t)  // void memeory leak.
+    {
+        free(t);
+    }
+    return buf;
 }

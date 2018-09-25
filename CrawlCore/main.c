@@ -33,6 +33,7 @@ int main(int argc, char ** argv)
 {
     struct db_backend db;
     db_backend_init("/Users/wyl/git-workspace/CourtCrawlCore/test.db3", &db);
+    /*
     struct task task;
     
     task_init(&task, NULL);
@@ -42,9 +43,10 @@ int main(int argc, char ** argv)
     db_backend_put(&db, &task);
     struct task task1;
     task_init(&task1, NULL);
+     */
     
     //db_backend_get(&db, 10, &task1);
-    printf("task1->uuid-> %s  data->%s\n", task1.uuid, task1.data);
+    //printf("task1->uuid-> %s  data->%s\n", task1.uuid, task1.data);
     //db_backend_get(&db, 10, &task1);
     //printf("task1->uuid-> %s  data->%s\n", task1.uuid, task1.data);
     int r;
@@ -160,7 +162,13 @@ int main(int argc, char ** argv)
     r = assistants_container_init(&container, loop, &db);
     //get_assistant_instance(&container, "mid->2");
     
-    
+    mid_set = hashmap_new();
+    if (!mid_set)
+    {
+        printf("new mid_set error...\n");
+        return -1;
+    }
+    hashmap_put(mid_set, "mid->2", NULL);
     
     struct server s;
     server_init(&s, "test---------", TCP_SERVER, loop, "127.0.0.1", 9001);

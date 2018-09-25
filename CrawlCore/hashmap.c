@@ -326,6 +326,37 @@ int hashmap_get(map_t in, char* key, any_t *arg){
 }
 
 /*
+ * check key exist.
+ */
+int hashmap_key_exist(map_t in, char* key){
+    int curr;
+    int i;
+    hashmap_map* m;
+    
+    /* Cast the hashmap */
+    m = (hashmap_map *) in;
+    
+    /* Find data location */
+    curr = hashmap_hash_int(m, key);
+    
+    /* Linear probing, if necessary */
+    for(i = 0; i<MAX_CHAIN_LENGTH; i++){
+        
+        int in_use = m->data[curr].in_use;
+        if (in_use == 1){
+            if (strcmp(m->data[curr].key,key)==0){
+                return MAP_OK;
+            }
+        }
+        
+        curr = (curr + 1) % m->table_size;
+    }
+
+    /* Not found */
+    return MAP_MISSING;
+}
+
+/*
  * Iterate the function parameter over each element in the hashmap.  The
  * additional any_t argument is passed to the function as its first
  * argument and the hashmap element is the second.
